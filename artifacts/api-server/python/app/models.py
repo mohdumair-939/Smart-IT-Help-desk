@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -97,3 +97,61 @@ class TicketActivity(Base):
 
     ticket: Mapped[Ticket] = relationship(back_populates="activity")
     actor: Mapped[User] = relationship()
+
+
+class KnowledgeDocument(Base):
+    __tablename__ = "helpdesk_knowledge_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    object_path: Mapped[str] = mapped_column(String(768), nullable=False, unique=True)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="uploading", index=True)
+    chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    uploaded_by_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    uploaded_by: Mapped[User] = relationship()
+    chunks: Mapped[list["KnowledgeChunk"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", order_by="KnowledgeChunk.chunk_index"
+    )
+
+
+class KnowledgeChunk(Base):
+    __tablename__ = "helpdesk_knowledge_chunks"
+    __table_args__ = (UniqueConstraint("document_id", "chunk_index", name="uq_helpdesk_knowledge_chunk_order"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_knowledge_documents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+
+    document: Mapped[KnowledgeDocument] = relationship(back_populates="chunks")
+
+
+class TicketAttachment(Base):
+    __tablename__ = "helpdesk_ticket_attachments"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ticket_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_tickets.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    uploaded_by_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    object_path: Mapped[str] = mapped_column(String(768), nullable=False, unique=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="uploading", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    ticket: Mapped[Ticket] = relationship()
+    uploaded_by: Mapped[User] = relationship()

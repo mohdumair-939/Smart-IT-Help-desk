@@ -24,13 +24,22 @@ import type {
   AuthResponse,
   CommentInput,
   DashboardSummary,
+  GroundedAnswer,
   HealthStatus,
+  KnowledgeDocument,
+  KnowledgeSearchInput,
+  KnowledgeUploadInput,
+  KnowledgeUploadResponse,
   ListRecentActivityParams,
   ListTicketsParams,
   ListUsersParams,
   LoginInput,
   RegisterInput,
   Ticket,
+  TicketAttachment,
+  TicketAttachmentDownload,
+  TicketAttachmentUploadInput,
+  TicketAttachmentUploadResponse,
   TicketComment,
   TicketInput,
   TicketPage,
@@ -1144,5 +1153,880 @@ export const useCreateTicketComment = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateTicketCommentMutationOptions(options));
+    }
+
+export const getListTicketAttachmentsUrl = (ticketId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/attachments`
+}
+
+/**
+ * @summary List files attached to a ticket the user can access
+ */
+export const listTicketAttachments = async (ticketId: string, options?: Parameters<typeof customFetch>[1]): Promise<TicketAttachment[]> => {
+
+  return customFetch<TicketAttachment[]>(getListTicketAttachmentsUrl(ticketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTicketAttachmentsQueryKey = (ticketId: string,) => {
+    return [
+    `/api/v1/tickets/${ticketId}/attachments`
+    ] as const;
+    }
+
+
+export const getListTicketAttachmentsQueryOptions = <TData = Awaited<ReturnType<typeof listTicketAttachments>>, TError = ErrorType<unknown>>(ticketId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTicketAttachments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTicketAttachmentsQueryKey(ticketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTicketAttachments>>> = ({ signal }) => listTicketAttachments(ticketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: ticketId !== null && ticketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTicketAttachments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTicketAttachmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listTicketAttachments>>>
+export type ListTicketAttachmentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List files attached to a ticket the user can access
+ */
+
+export function useListTicketAttachments<TData = Awaited<ReturnType<typeof listTicketAttachments>>, TError = ErrorType<unknown>>(
+ ticketId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTicketAttachments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTicketAttachmentsQueryOptions(ticketId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRequestTicketAttachmentUploadUrl = (ticketId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/attachments/upload-url`
+}
+
+/**
+ * @summary Request a private signed upload URL for a ticket attachment
+ */
+export const requestTicketAttachmentUpload = async (ticketId: string,
+    ticketAttachmentUploadInput: TicketAttachmentUploadInput, options?: Parameters<typeof customFetch>[1]): Promise<TicketAttachmentUploadResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<TicketAttachmentUploadResponse>(getRequestTicketAttachmentUploadUrl(ticketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(ticketAttachmentUploadInput)
+  }
+);}
+
+
+
+
+
+export const getRequestTicketAttachmentUploadMutationKey = () => ['requestTicketAttachmentUpload'] as const;
+
+export const getRequestTicketAttachmentUploadMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestTicketAttachmentUpload>>, TError,RequestTicketAttachmentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestTicketAttachmentUpload>>, TError,RequestTicketAttachmentUploadMutationVariables, TContext> => {
+
+const mutationKey = getRequestTicketAttachmentUploadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestTicketAttachmentUpload>>, RequestTicketAttachmentUploadMutationVariables> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  requestTicketAttachmentUpload(ticketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestTicketAttachmentUploadMutationResult = NonNullable<Awaited<ReturnType<typeof requestTicketAttachmentUpload>>>
+    export type RequestTicketAttachmentUploadMutationBody = BodyType<TicketAttachmentUploadInput>
+    export type RequestTicketAttachmentUploadMutationError = ErrorType<void>
+    export type RequestTicketAttachmentUploadMutationVariables = {ticketId: string;data: BodyType<TicketAttachmentUploadInput>}
+
+    /**
+ * @summary Request a private signed upload URL for a ticket attachment
+ */
+export const useRequestTicketAttachmentUpload = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestTicketAttachmentUpload>>, TError,RequestTicketAttachmentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestTicketAttachmentUpload>>,
+        TError,
+        RequestTicketAttachmentUploadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestTicketAttachmentUploadMutationOptions(options));
+    }
+
+export const getCompleteTicketAttachmentUploadUrl = (ticketId: string,
+    attachmentId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/attachments/${attachmentId}/complete`
+}
+
+/**
+ * @summary Verify and finalize a ticket attachment upload
+ */
+export const completeTicketAttachmentUpload = async (ticketId: string,
+    attachmentId: string, options?: Parameters<typeof customFetch>[1]): Promise<TicketAttachment> => {
+
+  return customFetch<TicketAttachment>(getCompleteTicketAttachmentUploadUrl(ticketId,attachmentId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCompleteTicketAttachmentUploadMutationKey = () => ['completeTicketAttachmentUpload'] as const;
+
+export const getCompleteTicketAttachmentUploadMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeTicketAttachmentUpload>>, TError,CompleteTicketAttachmentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeTicketAttachmentUpload>>, TError,CompleteTicketAttachmentUploadMutationVariables, TContext> => {
+
+const mutationKey = getCompleteTicketAttachmentUploadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeTicketAttachmentUpload>>, CompleteTicketAttachmentUploadMutationVariables> = (props) => {
+          const {ticketId,attachmentId} = props ?? {};
+
+          return  completeTicketAttachmentUpload(ticketId,attachmentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteTicketAttachmentUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeTicketAttachmentUpload>>>
+
+    export type CompleteTicketAttachmentUploadMutationError = ErrorType<void>
+    export type CompleteTicketAttachmentUploadMutationVariables = {ticketId: string;attachmentId: string}
+
+    /**
+ * @summary Verify and finalize a ticket attachment upload
+ */
+export const useCompleteTicketAttachmentUpload = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeTicketAttachmentUpload>>, TError,CompleteTicketAttachmentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeTicketAttachmentUpload>>,
+        TError,
+        CompleteTicketAttachmentUploadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCompleteTicketAttachmentUploadMutationOptions(options));
+    }
+
+export const getGetTicketAttachmentDownloadUrl = (ticketId: string,
+    attachmentId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/attachments/${attachmentId}/download`
+}
+
+/**
+ * @summary Get a short-lived signed download URL for a ticket attachment
+ */
+export const getTicketAttachmentDownload = async (ticketId: string,
+    attachmentId: string, options?: Parameters<typeof customFetch>[1]): Promise<TicketAttachmentDownload> => {
+
+  return customFetch<TicketAttachmentDownload>(getGetTicketAttachmentDownloadUrl(ticketId,attachmentId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTicketAttachmentDownloadQueryKey = (ticketId: string,
+    attachmentId: string,) => {
+    return [
+    `/api/v1/tickets/${ticketId}/attachments/${attachmentId}/download`
+    ] as const;
+    }
+
+
+export const getGetTicketAttachmentDownloadQueryOptions = <TData = Awaited<ReturnType<typeof getTicketAttachmentDownload>>, TError = ErrorType<unknown>>(ticketId: string,
+    attachmentId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTicketAttachmentDownload>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTicketAttachmentDownloadQueryKey(ticketId,attachmentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTicketAttachmentDownload>>> = ({ signal }) => getTicketAttachmentDownload(ticketId,attachmentId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: ticketId !== null && ticketId !== undefined && attachmentId !== null && attachmentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTicketAttachmentDownload>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTicketAttachmentDownloadQueryResult = NonNullable<Awaited<ReturnType<typeof getTicketAttachmentDownload>>>
+export type GetTicketAttachmentDownloadQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a short-lived signed download URL for a ticket attachment
+ */
+
+export function useGetTicketAttachmentDownload<TData = Awaited<ReturnType<typeof getTicketAttachmentDownload>>, TError = ErrorType<unknown>>(
+ ticketId: string,
+    attachmentId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTicketAttachmentDownload>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTicketAttachmentDownloadQueryOptions(ticketId,attachmentId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDeleteTicketAttachmentUrl = (ticketId: string,
+    attachmentId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/attachments/${attachmentId}`
+}
+
+/**
+ * @summary Delete an attachment uploaded by the user or managed by support staff
+ */
+export const deleteTicketAttachment = async (ticketId: string,
+    attachmentId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteTicketAttachmentUrl(ticketId,attachmentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteTicketAttachmentMutationKey = () => ['deleteTicketAttachment'] as const;
+
+export const getDeleteTicketAttachmentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTicketAttachment>>, TError,DeleteTicketAttachmentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTicketAttachment>>, TError,DeleteTicketAttachmentMutationVariables, TContext> => {
+
+const mutationKey = getDeleteTicketAttachmentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTicketAttachment>>, DeleteTicketAttachmentMutationVariables> = (props) => {
+          const {ticketId,attachmentId} = props ?? {};
+
+          return  deleteTicketAttachment(ticketId,attachmentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTicketAttachmentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTicketAttachment>>>
+
+    export type DeleteTicketAttachmentMutationError = ErrorType<void>
+    export type DeleteTicketAttachmentMutationVariables = {ticketId: string;attachmentId: string}
+
+    /**
+ * @summary Delete an attachment uploaded by the user or managed by support staff
+ */
+export const useDeleteTicketAttachment = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTicketAttachment>>, TError,DeleteTicketAttachmentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTicketAttachment>>,
+        TError,
+        DeleteTicketAttachmentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteTicketAttachmentMutationOptions(options));
+    }
+
+export const getGetTicketResolutionHelpUrl = (ticketId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/ai-resolution`
+}
+
+/**
+ * @summary Suggest ticket troubleshooting steps grounded in approved knowledge
+ */
+export const getTicketResolutionHelp = async (ticketId: string, options?: Parameters<typeof customFetch>[1]): Promise<GroundedAnswer> => {
+
+  return customFetch<GroundedAnswer>(getGetTicketResolutionHelpUrl(ticketId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTicketResolutionHelpMutationKey = () => ['getTicketResolutionHelp'] as const;
+
+export const getGetTicketResolutionHelpMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getTicketResolutionHelp>>, TError,GetTicketResolutionHelpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof getTicketResolutionHelp>>, TError,GetTicketResolutionHelpMutationVariables, TContext> => {
+
+const mutationKey = getGetTicketResolutionHelpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getTicketResolutionHelp>>, GetTicketResolutionHelpMutationVariables> = (props) => {
+          const {ticketId} = props ?? {};
+
+          return  getTicketResolutionHelp(ticketId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GetTicketResolutionHelpMutationResult = NonNullable<Awaited<ReturnType<typeof getTicketResolutionHelp>>>
+
+    export type GetTicketResolutionHelpMutationError = ErrorType<void>
+    export type GetTicketResolutionHelpMutationVariables = {ticketId: string}
+
+    /**
+ * @summary Suggest ticket troubleshooting steps grounded in approved knowledge
+ */
+export const useGetTicketResolutionHelp = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getTicketResolutionHelp>>, TError,GetTicketResolutionHelpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof getTicketResolutionHelp>>,
+        TError,
+        GetTicketResolutionHelpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGetTicketResolutionHelpMutationOptions(options));
+    }
+
+export const getRequestKnowledgeUploadUrl = () => {
+
+
+
+
+  return `/api/v1/knowledge/documents/upload-url`
+}
+
+/**
+ * @summary Request a private App Storage upload URL (administrators only)
+ */
+export const requestKnowledgeUpload = async (knowledgeUploadInput: KnowledgeUploadInput, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeUploadResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<KnowledgeUploadResponse>(getRequestKnowledgeUploadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(knowledgeUploadInput)
+  }
+);}
+
+
+
+
+
+export const getRequestKnowledgeUploadMutationKey = () => ['requestKnowledgeUpload'] as const;
+
+export const getRequestKnowledgeUploadMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestKnowledgeUpload>>, TError,RequestKnowledgeUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestKnowledgeUpload>>, TError,RequestKnowledgeUploadMutationVariables, TContext> => {
+
+const mutationKey = getRequestKnowledgeUploadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestKnowledgeUpload>>, RequestKnowledgeUploadMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestKnowledgeUpload(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestKnowledgeUploadMutationResult = NonNullable<Awaited<ReturnType<typeof requestKnowledgeUpload>>>
+    export type RequestKnowledgeUploadMutationBody = BodyType<KnowledgeUploadInput>
+    export type RequestKnowledgeUploadMutationError = ErrorType<void>
+    export type RequestKnowledgeUploadMutationVariables = {data: BodyType<KnowledgeUploadInput>}
+
+    /**
+ * @summary Request a private App Storage upload URL (administrators only)
+ */
+export const useRequestKnowledgeUpload = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestKnowledgeUpload>>, TError,RequestKnowledgeUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestKnowledgeUpload>>,
+        TError,
+        RequestKnowledgeUploadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestKnowledgeUploadMutationOptions(options));
+    }
+
+export const getListKnowledgeDocumentsUrl = () => {
+
+
+
+
+  return `/api/v1/knowledge/documents`
+}
+
+/**
+ * @summary List knowledge documents (administrators only)
+ */
+export const listKnowledgeDocuments = async ( options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeDocument[]> => {
+
+  return customFetch<KnowledgeDocument[]>(getListKnowledgeDocumentsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListKnowledgeDocumentsQueryKey = () => {
+    return [
+    `/api/v1/knowledge/documents`
+    ] as const;
+    }
+
+
+export const getListKnowledgeDocumentsQueryOptions = <TData = Awaited<ReturnType<typeof listKnowledgeDocuments>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKnowledgeDocuments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListKnowledgeDocumentsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listKnowledgeDocuments>>> = ({ signal }) => listKnowledgeDocuments({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listKnowledgeDocuments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListKnowledgeDocumentsQueryResult = NonNullable<Awaited<ReturnType<typeof listKnowledgeDocuments>>>
+export type ListKnowledgeDocumentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List knowledge documents (administrators only)
+ */
+
+export function useListKnowledgeDocuments<TData = Awaited<ReturnType<typeof listKnowledgeDocuments>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKnowledgeDocuments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListKnowledgeDocumentsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getIngestKnowledgeDocumentUrl = (documentId: string,) => {
+
+
+
+
+  return `/api/v1/knowledge/documents/${documentId}/ingest`
+}
+
+/**
+ * @summary Index an uploaded document (administrators only)
+ */
+export const ingestKnowledgeDocument = async (documentId: string, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeDocument> => {
+
+  return customFetch<KnowledgeDocument>(getIngestKnowledgeDocumentUrl(documentId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getIngestKnowledgeDocumentMutationKey = () => ['ingestKnowledgeDocument'] as const;
+
+export const getIngestKnowledgeDocumentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ingestKnowledgeDocument>>, TError,IngestKnowledgeDocumentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof ingestKnowledgeDocument>>, TError,IngestKnowledgeDocumentMutationVariables, TContext> => {
+
+const mutationKey = getIngestKnowledgeDocumentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ingestKnowledgeDocument>>, IngestKnowledgeDocumentMutationVariables> = (props) => {
+          const {documentId} = props ?? {};
+
+          return  ingestKnowledgeDocument(documentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IngestKnowledgeDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof ingestKnowledgeDocument>>>
+
+    export type IngestKnowledgeDocumentMutationError = ErrorType<void>
+    export type IngestKnowledgeDocumentMutationVariables = {documentId: string}
+
+    /**
+ * @summary Index an uploaded document (administrators only)
+ */
+export const useIngestKnowledgeDocument = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ingestKnowledgeDocument>>, TError,IngestKnowledgeDocumentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof ingestKnowledgeDocument>>,
+        TError,
+        IngestKnowledgeDocumentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIngestKnowledgeDocumentMutationOptions(options));
+    }
+
+export const getDeleteKnowledgeDocumentUrl = (documentId: string,) => {
+
+
+
+
+  return `/api/v1/knowledge/documents/${documentId}`
+}
+
+/**
+ * @summary Delete a knowledge document and its indexed passages (administrators only)
+ */
+export const deleteKnowledgeDocument = async (documentId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteKnowledgeDocumentUrl(documentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteKnowledgeDocumentMutationKey = () => ['deleteKnowledgeDocument'] as const;
+
+export const getDeleteKnowledgeDocumentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteKnowledgeDocument>>, TError,DeleteKnowledgeDocumentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteKnowledgeDocument>>, TError,DeleteKnowledgeDocumentMutationVariables, TContext> => {
+
+const mutationKey = getDeleteKnowledgeDocumentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteKnowledgeDocument>>, DeleteKnowledgeDocumentMutationVariables> = (props) => {
+          const {documentId} = props ?? {};
+
+          return  deleteKnowledgeDocument(documentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteKnowledgeDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteKnowledgeDocument>>>
+
+    export type DeleteKnowledgeDocumentMutationError = ErrorType<void>
+    export type DeleteKnowledgeDocumentMutationVariables = {documentId: string}
+
+    /**
+ * @summary Delete a knowledge document and its indexed passages (administrators only)
+ */
+export const useDeleteKnowledgeDocument = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteKnowledgeDocument>>, TError,DeleteKnowledgeDocumentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteKnowledgeDocument>>,
+        TError,
+        DeleteKnowledgeDocumentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteKnowledgeDocumentMutationOptions(options));
+    }
+
+export const getSearchKnowledgeUrl = () => {
+
+
+
+
+  return `/api/v1/knowledge/search`
+}
+
+/**
+ * @summary Ask a natural-language question against the knowledge base
+ */
+export const searchKnowledge = async (knowledgeSearchInput: KnowledgeSearchInput, options?: Parameters<typeof customFetch>[1]): Promise<GroundedAnswer> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<GroundedAnswer>(getSearchKnowledgeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(knowledgeSearchInput)
+  }
+);}
+
+
+
+
+
+export const getSearchKnowledgeMutationKey = () => ['searchKnowledge'] as const;
+
+export const getSearchKnowledgeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof searchKnowledge>>, TError,SearchKnowledgeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof searchKnowledge>>, TError,SearchKnowledgeMutationVariables, TContext> => {
+
+const mutationKey = getSearchKnowledgeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof searchKnowledge>>, SearchKnowledgeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  searchKnowledge(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SearchKnowledgeMutationResult = NonNullable<Awaited<ReturnType<typeof searchKnowledge>>>
+    export type SearchKnowledgeMutationBody = BodyType<KnowledgeSearchInput>
+    export type SearchKnowledgeMutationError = ErrorType<void>
+    export type SearchKnowledgeMutationVariables = {data: BodyType<KnowledgeSearchInput>}
+
+    /**
+ * @summary Ask a natural-language question against the knowledge base
+ */
+export const useSearchKnowledge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof searchKnowledge>>, TError,SearchKnowledgeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof searchKnowledge>>,
+        TError,
+        SearchKnowledgeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSearchKnowledgeMutationOptions(options));
     }
 

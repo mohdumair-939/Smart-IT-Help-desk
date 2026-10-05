@@ -403,3 +403,223 @@ export const CreateTicketCommentResponse = zod.object({
 })
 
 
+/**
+ * @summary List files attached to a ticket the user can access
+ */
+export const ListTicketAttachmentsParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid()
+})
+
+export const ListTicketAttachmentsResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "filename": zod.string(),
+  "content_type": zod.string(),
+  "size_bytes": zod.number().int(),
+  "status": zod.enum(['uploading', 'ready']),
+  "created_at": zod.coerce.date(),
+  "uploaded_by": zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+})
+})
+export const ListTicketAttachmentsResponse = zod.array(ListTicketAttachmentsResponseItem)
+
+
+/**
+ * @summary Request a private signed upload URL for a ticket attachment
+ */
+export const RequestTicketAttachmentUploadParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid()
+})
+
+export const requestTicketAttachmentUploadBodyFilenameMax = 255;
+
+export const requestTicketAttachmentUploadBodyContentTypeMax = 120;
+
+export const requestTicketAttachmentUploadBodySizeBytesMax = 10485760;
+
+
+
+export const RequestTicketAttachmentUploadBody = zod.object({
+  "filename": zod.string().min(1).max(requestTicketAttachmentUploadBodyFilenameMax),
+  "content_type": zod.string().min(1).max(requestTicketAttachmentUploadBodyContentTypeMax),
+  "size_bytes": zod.number().int().min(1).max(requestTicketAttachmentUploadBodySizeBytesMax)
+})
+
+export const RequestTicketAttachmentUploadResponse = zod.object({
+  "attachment_id": zod.string().uuid(),
+  "object_path": zod.string(),
+  "upload_url": zod.string().url()
+})
+
+
+/**
+ * @summary Verify and finalize a ticket attachment upload
+ */
+export const CompleteTicketAttachmentUploadParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid(),
+  "attachment_id": zod.coerce.string().uuid()
+})
+
+export const CompleteTicketAttachmentUploadResponse = zod.object({
+  "id": zod.string().uuid(),
+  "filename": zod.string(),
+  "content_type": zod.string(),
+  "size_bytes": zod.number().int(),
+  "status": zod.enum(['uploading', 'ready']),
+  "created_at": zod.coerce.date(),
+  "uploaded_by": zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+})
+})
+
+
+/**
+ * @summary Get a short-lived signed download URL for a ticket attachment
+ */
+export const GetTicketAttachmentDownloadParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid(),
+  "attachment_id": zod.coerce.string().uuid()
+})
+
+export const GetTicketAttachmentDownloadResponse = zod.object({
+  "download_url": zod.string().url()
+})
+
+
+/**
+ * @summary Delete an attachment uploaded by the user or managed by support staff
+ */
+export const DeleteTicketAttachmentParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid(),
+  "attachment_id": zod.coerce.string().uuid()
+})
+
+export const DeleteTicketAttachmentResponse = zod.void()
+
+
+/**
+ * @summary Suggest ticket troubleshooting steps grounded in approved knowledge
+ */
+export const GetTicketResolutionHelpParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid()
+})
+
+export const GetTicketResolutionHelpResponse = zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+})
+
+
+/**
+ * @summary Request a private App Storage upload URL (administrators only)
+ */
+export const requestKnowledgeUploadBodyTitleMin = 2;
+export const requestKnowledgeUploadBodyTitleMax = 180;
+
+export const requestKnowledgeUploadBodyFilenameMax = 255;
+
+export const requestKnowledgeUploadBodyContentTypeMax = 120;
+
+export const requestKnowledgeUploadBodySizeBytesMax = 15728640;
+
+
+
+export const RequestKnowledgeUploadBody = zod.object({
+  "title": zod.string().min(requestKnowledgeUploadBodyTitleMin).max(requestKnowledgeUploadBodyTitleMax),
+  "filename": zod.string().min(1).max(requestKnowledgeUploadBodyFilenameMax),
+  "content_type": zod.string().min(1).max(requestKnowledgeUploadBodyContentTypeMax),
+  "size_bytes": zod.number().int().min(1).max(requestKnowledgeUploadBodySizeBytesMax)
+})
+
+export const RequestKnowledgeUploadResponse = zod.object({
+  "document_id": zod.string().uuid(),
+  "object_path": zod.string(),
+  "upload_url": zod.string().url()
+})
+
+
+/**
+ * @summary List knowledge documents (administrators only)
+ */
+export const ListKnowledgeDocumentsResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "content_type": zod.string(),
+  "size_bytes": zod.number().int(),
+  "status": zod.enum(['uploading', 'queued', 'processing', 'ready', 'error']),
+  "chunk_count": zod.number().int(),
+  "error_message": zod.string().nullable(),
+  "created_at": zod.coerce.date()
+})
+export const ListKnowledgeDocumentsResponse = zod.array(ListKnowledgeDocumentsResponseItem)
+
+
+/**
+ * @summary Index an uploaded document (administrators only)
+ */
+export const IngestKnowledgeDocumentParams = zod.object({
+  "document_id": zod.coerce.string().uuid()
+})
+
+export const IngestKnowledgeDocumentResponse = zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "content_type": zod.string(),
+  "size_bytes": zod.number().int(),
+  "status": zod.enum(['uploading', 'queued', 'processing', 'ready', 'error']),
+  "chunk_count": zod.number().int(),
+  "error_message": zod.string().nullable(),
+  "created_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a knowledge document and its indexed passages (administrators only)
+ */
+export const DeleteKnowledgeDocumentParams = zod.object({
+  "document_id": zod.coerce.string().uuid()
+})
+
+export const DeleteKnowledgeDocumentResponse = zod.void()
+
+
+/**
+ * @summary Ask a natural-language question against the knowledge base
+ */
+export const searchKnowledgeBodyQueryMin = 3;
+export const searchKnowledgeBodyQueryMax = 2000;
+
+
+
+export const SearchKnowledgeBody = zod.object({
+  "query": zod.string().min(searchKnowledgeBodyQueryMin).max(searchKnowledgeBodyQueryMax)
+})
+
+export const SearchKnowledgeResponse = zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+})
+
+

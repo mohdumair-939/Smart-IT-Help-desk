@@ -192,6 +192,52 @@ export interface TicketComment {
   created_at: string;
 }
 
+export interface TicketAttachmentUploadInput {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  filename: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  content_type: string;
+  /**
+     * @minimum 1
+     * @maximum 10485760
+     */
+  size_bytes: number;
+}
+
+export interface TicketAttachmentUploadResponse {
+  attachment_id: string;
+  object_path: string;
+  upload_url: string;
+}
+
+export type TicketAttachmentStatus = typeof TicketAttachmentStatus[keyof typeof TicketAttachmentStatus];
+
+
+export const TicketAttachmentStatus = {
+  uploading: 'uploading',
+  ready: 'ready',
+} as const;
+
+export interface TicketAttachment {
+  id: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  status: TicketAttachmentStatus;
+  created_at: string;
+  uploaded_by: UserSummary;
+}
+
+export interface TicketAttachmentDownload {
+  download_url: string;
+}
+
 export interface CommentInput {
   /**
      * @minLength 1
@@ -228,6 +274,82 @@ export interface ActivityItem {
   action: string;
   detail: string;
   created_at: string;
+}
+
+export interface KnowledgeUploadInput {
+  /**
+     * @minLength 2
+     * @maxLength 180
+     */
+  title: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  filename: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  content_type: string;
+  /**
+     * @minimum 1
+     * @maximum 15728640
+     */
+  size_bytes: number;
+}
+
+export interface KnowledgeUploadResponse {
+  document_id: string;
+  object_path: string;
+  upload_url: string;
+}
+
+export type KnowledgeDocumentStatus = typeof KnowledgeDocumentStatus[keyof typeof KnowledgeDocumentStatus];
+
+
+export const KnowledgeDocumentStatus = {
+  uploading: 'uploading',
+  queued: 'queued',
+  processing: 'processing',
+  ready: 'ready',
+  error: 'error',
+} as const;
+
+export interface KnowledgeDocument {
+  id: string;
+  title: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  status: KnowledgeDocumentStatus;
+  chunk_count: number;
+  /** @nullable */
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface KnowledgeSearchInput {
+  /**
+     * @minLength 3
+     * @maxLength 2000
+     */
+  query: string;
+}
+
+export interface Citation {
+  document_id: string;
+  title: string;
+  filename: string;
+  excerpt: string;
+  chunk_index: number;
+  relevance: number;
+}
+
+export interface GroundedAnswer {
+  answer: string;
+  citations: Citation[];
+  needs_human_support: boolean;
 }
 
 export type ListRecentActivityParams = {

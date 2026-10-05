@@ -11,6 +11,7 @@ out-tsc
 # dependencies
 node_modules
 .pythonlibs/
+.chroma/
 __pycache__/
 *.py[cod]
 .pytest_cache/

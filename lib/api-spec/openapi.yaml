@@ -18,6 +18,10 @@ tags:
     description: Ticket lifecycle and comments
   - name: users
     description: Team member lookup for assignments
+  - name: knowledge
+    description: Admin-managed knowledge documents and grounded assistance
+  - name: attachments
+    description: Private ticket file uploads and authorized downloads
 security:
   - bearerAuth: []
 paths:
@@ -285,6 +289,242 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TicketComment"
+  /v1/tickets/{ticket_id}/attachments:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: listTicketAttachments
+      tags: [attachments]
+      summary: List files attached to a ticket the user can access
+      responses:
+        "200":
+          description: Ticket attachments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TicketAttachment" }
+  /v1/tickets/{ticket_id}/attachments/upload-url:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: requestTicketAttachmentUpload
+      tags: [attachments]
+      summary: Request a private signed upload URL for a ticket attachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketAttachmentUploadInput"
+      responses:
+        "201":
+          description: Short-lived upload URL and attachment identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketAttachmentUploadResponse"
+        "403":
+          description: The user cannot access this ticket
+  /v1/tickets/{ticket_id}/attachments/{attachment_id}/complete:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: completeTicketAttachmentUpload
+      tags: [attachments]
+      summary: Verify and finalize a ticket attachment upload
+      responses:
+        "200":
+          description: Finalized attachment metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketAttachment"
+        "409":
+          description: The uploaded file is not yet available in App Storage
+        "422":
+          description: The uploaded file size did not match the request
+  /v1/tickets/{ticket_id}/attachments/{attachment_id}/download:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getTicketAttachmentDownload
+      tags: [attachments]
+      summary: Get a short-lived signed download URL for a ticket attachment
+      responses:
+        "200":
+          description: Signed download link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketAttachmentDownload"
+  /v1/tickets/{ticket_id}/attachments/{attachment_id}:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: deleteTicketAttachment
+      tags: [attachments]
+      summary: Delete an attachment uploaded by the user or managed by support staff
+      responses:
+        "204":
+          description: Attachment deleted
+        "404":
+          description: Attachment not found or the user is not permitted to remove it
+  /v1/tickets/{ticket_id}/ai-resolution:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: getTicketResolutionHelp
+      tags: [knowledge]
+      summary: Suggest ticket troubleshooting steps grounded in approved knowledge
+      responses:
+        "200":
+          description: Grounded resolution suggestion with citations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroundedAnswer"
+        "403":
+          description: The user cannot view this ticket
+  /v1/knowledge/documents/upload-url:
+    post:
+      operationId: requestKnowledgeUpload
+      tags: [knowledge]
+      summary: Request a private App Storage upload URL (administrators only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeUploadInput"
+      responses:
+        "201":
+          description: Short-lived upload URL and document identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeUploadResponse"
+        "403":
+          description: Administrator access required
+  /v1/knowledge/documents:
+    get:
+      operationId: listKnowledgeDocuments
+      tags: [knowledge]
+      summary: List knowledge documents (administrators only)
+      responses:
+        "200":
+          description: Knowledge documents and indexing status
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/KnowledgeDocument" }
+  /v1/knowledge/documents/{document_id}/ingest:
+    parameters:
+      - name: document_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: ingestKnowledgeDocument
+      tags: [knowledge]
+      summary: Index an uploaded document (administrators only)
+      responses:
+        "202":
+          description: Document queued for indexing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeDocument"
+        "409":
+          description: Document is already being indexed
+  /v1/knowledge/documents/{document_id}:
+    parameters:
+      - name: document_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: deleteKnowledgeDocument
+      tags: [knowledge]
+      summary: Delete a knowledge document and its indexed passages (administrators only)
+      responses:
+        "204":
+          description: Document removed
+        "404":
+          description: Document not found
+  /v1/knowledge/search:
+    post:
+      operationId: searchKnowledge
+      tags: [knowledge]
+      summary: Ask a natural-language question against the knowledge base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeSearchInput"
+      responses:
+        "200":
+          description: Grounded answer and citations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroundedAnswer"
+        "503":
+          description: The assistant or local knowledge index is unavailable
 components:
   securitySchemes:
     bearerAuth:
@@ -411,6 +651,36 @@ components:
         author: { $ref: "#/components/schemas/UserSummary" }
         body: { type: string }
         created_at: { type: string, format: date-time }
+    TicketAttachmentUploadInput:
+      type: object
+      required: [filename, content_type, size_bytes]
+      properties:
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        content_type: { type: string, minLength: 1, maxLength: 120 }
+        size_bytes: { type: integer, minimum: 1, maximum: 10485760 }
+    TicketAttachmentUploadResponse:
+      type: object
+      required: [attachment_id, object_path, upload_url]
+      properties:
+        attachment_id: { type: string, format: uuid }
+        object_path: { type: string }
+        upload_url: { type: string, format: uri }
+    TicketAttachment:
+      type: object
+      required: [id, filename, content_type, size_bytes, status, created_at, uploaded_by]
+      properties:
+        id: { type: string, format: uuid }
+        filename: { type: string }
+        content_type: { type: string }
+        size_bytes: { type: integer }
+        status: { type: string, enum: [uploading, ready] }
+        created_at: { type: string, format: date-time }
+        uploaded_by: { $ref: "#/components/schemas/UserSummary" }
+    TicketAttachmentDownload:
+      type: object
+      required: [download_url]
+      properties:
+        download_url: { type: string, format: uri }
     CommentInput:
       type: object
       required: [body]
@@ -456,4 +726,56 @@ components:
         action: { type: string }
         detail: { type: string }
         created_at: { type: string, format: date-time }
+    KnowledgeUploadInput:
+      type: object
+      required: [title, filename, content_type, size_bytes]
+      properties:
+        title: { type: string, minLength: 2, maxLength: 180 }
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        content_type: { type: string, minLength: 1, maxLength: 120 }
+        size_bytes: { type: integer, minimum: 1, maximum: 15728640 }
+    KnowledgeUploadResponse:
+      type: object
+      required: [document_id, object_path, upload_url]
+      properties:
+        document_id: { type: string, format: uuid }
+        object_path: { type: string }
+        upload_url: { type: string, format: uri }
+    KnowledgeDocument:
+      type: object
+      required: [id, title, filename, content_type, size_bytes, status, chunk_count, error_message, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        filename: { type: string }
+        content_type: { type: string }
+        size_bytes: { type: integer }
+        status: { type: string, enum: [uploading, queued, processing, ready, error] }
+        chunk_count: { type: integer }
+        error_message: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+    KnowledgeSearchInput:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string, minLength: 3, maxLength: 2000 }
+    Citation:
+      type: object
+      required: [document_id, title, filename, excerpt, chunk_index, relevance]
+      properties:
+        document_id: { type: string, format: uuid }
+        title: { type: string }
+        filename: { type: string }
+        excerpt: { type: string }
+        chunk_index: { type: integer }
+        relevance: { type: number }
+    GroundedAnswer:
+      type: object
+      required: [answer, citations, needs_human_support]
+      properties:
+        answer: { type: string }
+        citations:
+          type: array
+          items: { $ref: "#/components/schemas/Citation" }
+        needs_human_support: { type: boolean }
 

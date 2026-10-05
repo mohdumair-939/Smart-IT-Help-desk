@@ -64,3 +64,9 @@ def require_staff(user: User = Depends(get_current_user)) -> User:
     if user.role not in {"support_engineer", "admin"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Support staff access is required.")
     return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrator access is required.")
+    return user

@@ -2,7 +2,7 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 're
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import {
-  Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Bell, BriefcaseBusiness, Check,
+  Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Bell, BookOpen, BriefcaseBusiness, Check,
   CheckCircle2, ChevronDown, CircleHelp, Clock3, FilePlus2, Filter, Gauge, Headphones,
   Layers3, ListFilter, LoaderCircle, LogOut, MessageSquareText, Monitor, Plus, Search,
   Send, ShieldCheck, Ticket as TicketIcon, UserRound, Users, Wifi, X,
@@ -15,6 +15,8 @@ import {
   useListRecentActivity, useListTicketComments, useListTickets, useListUsers, useLogin,
   useRegister, useUpdateTicket,
 } from '@workspace/api-client-react';
+import KnowledgeBasePage, { TicketResolutionAssist } from './KnowledgeBasePage';
+import TicketAttachments from './TicketAttachments';
 import {
   TicketCategory, TicketPriority, TicketStatus,
   type ActivityItem, type AuthResponse, type DashboardSummary, type Ticket,
@@ -63,6 +65,7 @@ function Router() {
     <Route path="/tickets"><Protected><TicketsPage /></Protected></Route>
     <Route path="/tickets/:ticketId"><Protected><TicketDetailPage /></Protected></Route>
     <Route path="/new-ticket"><Protected><NewTicketPage /></Protected></Route>
+    <Route path="/knowledge"><Protected><KnowledgeBasePage /></Protected></Route>
     <Route><NotFound /></Route>
   </Switch>;
 }
@@ -97,6 +100,7 @@ function AppShell({ user, children }: { user: User; children: ReactNode }) {
     { href: '/dashboard', label: 'Overview', icon: Gauge },
     { href: '/tickets', label: 'Ticket queue', icon: Layers3 },
     { href: '/new-ticket', label: 'Submit a request', icon: FilePlus2 },
+    { href: '/knowledge', label: 'Knowledge base', icon: BookOpen },
   ];
   const activePath = window.location.pathname;
   return <div className="shell">
@@ -124,6 +128,7 @@ function titleForPath(path: string) {
   if (path === '/dashboard') return 'Overview';
   if (path === '/tickets') return 'Ticket queue';
   if (path === '/new-ticket') return 'Submit a request';
+  if (path === '/knowledge') return 'Knowledge base';
   if (path.startsWith('/tickets/')) return 'Ticket details';
   return 'Workspace';
 }
@@ -326,6 +331,7 @@ function TicketDetailPage() {
           {commentsQuery.isLoading ? <LoadingRows count={2} /> : commentsQuery.isError ? <PageError error={commentsQuery.error} retry={() => commentsQuery.refetch()} /> : commentsQuery.data?.length ? <div style={{ padding: '2px 20px 0' }}>{commentsQuery.data.map((comment) => <div className="comment" key={comment.id}><div className="avatar" style={{ width: 29, height: 29, flexBasis: 29 }}>{initials(comment.author.name)}</div><div className="comment-content"><div className="comment-top"><strong>{comment.author.name}</strong><time>{formatDate(comment.created_at, true)}</time></div><p className="comment-body">{comment.body}</p></div></div>)}</div> : <EmptyState icon={<MessageSquareText size={18} />} title="No updates yet" body="Send a message to start the conversation." />}
           <form className="comment-form" onSubmit={submitComment} style={{ padding: '0 20px 20px' }}><textarea aria-label="Write an update" value={body} onChange={(event) => setBody(event.target.value)} placeholder="Write an update for the support team…" maxLength={8000} data-testid="input-comment" /><button className="button small" type="submit" disabled={!body.trim() || addComment.isPending} data-testid="button-send-comment">{addComment.isPending ? <LoaderCircle size={13} /> : <Send size={13} />} Send</button></form>
         </section>
+        <div style={{ marginTop: 17 }}><TicketAttachments ticketId={ticketId} /></div>
       </div>
       <aside className="panel side-panel">
         <h3>Ticket information</h3>
@@ -338,6 +344,7 @@ function TicketDetailPage() {
         {isEngineer ? <div className="side-prop"><label>Resolution notes</label><textarea value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="Add resolution details…" maxLength={12000} data-testid="input-resolution" /><button className="button small" style={{ marginTop: 8 }} disabled={update.isPending || resolution === (ticket.resolution || '')} onClick={() => patch({ resolution: resolution || null })} data-testid="button-save-resolution">{update.isPending ? 'Saving…' : 'Save resolution'}</button></div> : null}
       </aside>
     </div>
+    <div style={{ marginTop: 18 }}><TicketResolutionAssist ticketId={ticketId} onUseSuggestion={isEngineer ? (suggestion) => setResolution(suggestion) : undefined} /></div>
   </section>;
 }
 

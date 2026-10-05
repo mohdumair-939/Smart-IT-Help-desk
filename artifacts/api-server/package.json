@@ -9,6 +9,7 @@
     "start": "uv run --project ../.. --no-sync uvicorn app.main:app --app-dir python --host 0.0.0.0 --port ${PORT:-8080}",
     "migrate": "uv run --project ../.. --no-sync alembic -c python/alembic.ini upgrade head",
     "create-staff-user": "PYTHONPATH=python uv run --project ../.. --no-sync python -m app.bootstrap_user",
+    "test": "PYTHONPATH=python uv run --project ../.. --no-sync python -m unittest discover -s python/tests -v",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

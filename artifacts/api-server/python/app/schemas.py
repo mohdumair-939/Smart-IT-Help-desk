@@ -179,3 +179,77 @@ class ActivityRead(BaseModel):
     action: str
     detail: str
     created_at: datetime
+
+
+class KnowledgeUploadInput(BaseModel):
+    title: str = Field(min_length=2, max_length=180)
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=120)
+    size_bytes: int = Field(gt=0, le=15 * 1024 * 1024)
+
+
+class KnowledgeUploadResponse(BaseModel):
+    document_id: UUID
+    object_path: str
+    upload_url: str
+
+
+class KnowledgeDocumentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    title: str
+    filename: str
+    content_type: str
+    size_bytes: int
+    status: str
+    chunk_count: int
+    error_message: str | None
+    created_at: datetime
+
+
+class KnowledgeSearchInput(BaseModel):
+    query: str = Field(min_length=3, max_length=2000)
+
+
+class CitationRead(BaseModel):
+    document_id: UUID
+    title: str
+    filename: str
+    excerpt: str
+    chunk_index: int
+    relevance: float
+
+
+class GroundedAnswer(BaseModel):
+    answer: str
+    citations: list[CitationRead]
+    needs_human_support: bool
+
+
+class TicketAttachmentUploadInput(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=120)
+    size_bytes: int = Field(gt=0, le=10 * 1024 * 1024)
+
+
+class TicketAttachmentUploadResponse(BaseModel):
+    attachment_id: UUID
+    object_path: str
+    upload_url: str
+
+
+class TicketAttachmentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    filename: str
+    content_type: str
+    size_bytes: int
+    status: str
+    created_at: datetime
+    uploaded_by: UserSummary
+
+
+class TicketAttachmentDownload(BaseModel):
+    download_url: str
