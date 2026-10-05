@@ -1,44 +1,54 @@
-# [Project name]
+# Smart Help Desk
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+IT service teams use Smart Help Desk to manage support requests, track ticket resolution, and share troubleshooting knowledge.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the FastAPI server (port 8080)
+- `pnpm --filter @workspace/api-server run migrate` — apply Alembic migrations to the development database
+- `pnpm --filter @workspace/api-server run create-staff-user -- --role admin` — interactively create a staff account
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required environment: `DATABASE_URL` and `SESSION_SECRET` (at least 32 characters)
+- The frontend runs as the `artifacts/smart-help-desk: web` workflow.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React, TypeScript, Vite, Tailwind CSS
+- API: Python 3.13, FastAPI, SQLAlchemy, Alembic
+- Database: PostgreSQL
+- Password hashing: Argon2; API sessions use signed JWT bearer tokens
+- API contract: OpenAPI source with Orval-generated TypeScript clients and Zod schemas
+- Workspace/build tooling: pnpm, Node.js, TypeScript
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/smart-help-desk/` — React dashboard, ticket queue, and ticket workflows
+- `artifacts/api-server/python/app/` — FastAPI routes, SQLAlchemy models, validation, and authorization
+- `artifacts/api-server/python/migrations/` — Alembic schema migrations
+- `lib/api-spec/openapi.yaml` — versioned API contract (`/api/v1`)
+- `lib/api-client-react/` and `lib/api-zod/` — generated API hooks and validation schemas
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Public registration creates employee accounts only. Support and admin accounts are created through the interactive staff-account command.
+- API users see only their own tickets; support engineers and admins can work across the queue.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Employees can register, sign in, create tickets, track status, and comment.
+- Support staff can search and update tickets, assign engineers, and review live queue metrics.
+- Knowledge-base ingestion and grounded AI assistance are planned as later milestones; they are not implemented yet.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+-
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Update `lib/api-spec/openapi.yaml`, run codegen, then update the FastAPI implementation to match the generated contract.
+- Apply local schema changes with Alembic before using the API.
 
 ## Pointers
 

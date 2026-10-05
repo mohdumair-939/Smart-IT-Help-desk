@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Smart Help Desk"
+description = "An IT service desk for employees and support engineers to manage requests, track ticket progress, and resolve recurring issues from a shared knowledge base."
+version = "1.0.0"
+id = "artifacts/smart-help-desk"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25926
+
+[services.development]
+run = "pnpm --filter @workspace/smart-help-desk run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-help-desk", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smart-help-desk/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25926"
+BASE_PATH = "/"
