@@ -16,6 +16,7 @@ from app.object_storage import ObjectStorageError, create_upload_url, delete_obj
 from app.schemas import (
     GroundedAnswer,
     KnowledgeDocumentRead,
+    KnowledgeResolutionDraftRead,
     KnowledgeSearchInput,
     KnowledgeUploadInput,
     KnowledgeUploadResponse,
@@ -26,6 +27,39 @@ logger = logging.getLogger("smart_help_desk.knowledge_api")
 router = APIRouter(prefix="/api/v1", tags=["knowledge"])
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md"}
 MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+
+
+@router.get(
+    "/knowledge/tickets/{ticket_id}/resolution-draft",
+    response_model=KnowledgeResolutionDraftRead,
+)
+def resolution_article_draft(
+    ticket_id: UUID,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> KnowledgeResolutionDraftRead:
+    ticket = db.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket not found.")
+    if ticket.status not in {"resolved", "closed"} or not ticket.resolution or len(ticket.resolution.strip()) < 20:
+        raise HTTPException(status_code=409, detail="Resolve the ticket with a useful resolution before drafting an article.")
+    safe_title = re.sub(r"[\r\n#]+", " ", ticket.title).strip()[:160] or "Support resolution"
+    markdown = (
+        f"# {safe_title}\n\n"
+        f"**Category:** {ticket.category.replace('_', ' ')}  \n"
+        f"**Support department:** {ticket.department}\n\n"
+        "## Resolution\n\n"
+        f"{ticket.resolution.strip()[:8000]}\n\n"
+        "> Review this draft for organization-specific details, credentials, and personal information before publishing.\n"
+    )
+    return KnowledgeResolutionDraftRead(
+        ticket_id=ticket.id,
+        ticket_number=ticket.number,
+        title=f"{safe_title} — resolution guide"[:180],
+        filename=f"{ticket.number.lower()}-resolution.md",
+        content_type="text/markdown",
+        markdown=markdown,
+    )
 
 
 def _clean_filename(value: str) -> str:

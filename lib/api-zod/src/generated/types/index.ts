@@ -7,6 +7,14 @@
  */
 
 export * from './activityItem';
+export * from './assistantAnalysis';
+export * from './assistantMessage';
+export * from './assistantMessageInput';
+export * from './assistantMessageKind';
+export * from './assistantMessageRole';
+export * from './assistantResolveInput';
+export * from './assistantSession';
+export * from './assistantSessionStatus';
 export * from './authResponse';
 export * from './authResponseTokenType';
 export * from './citation';
@@ -18,14 +26,20 @@ export * from './groundedAnswer';
 export * from './healthStatus';
 export * from './knowledgeDocument';
 export * from './knowledgeDocumentStatus';
+export * from './knowledgeGap';
+export * from './knowledgeGapStatus';
+export * from './knowledgeResolutionDraft';
 export * from './knowledgeSearchInput';
 export * from './knowledgeUploadInput';
 export * from './knowledgeUploadResponse';
+export * from './listKnowledgeGapsParams';
+export * from './listKnowledgeGapsStatus';
 export * from './listRecentActivityParams';
 export * from './listTicketsParams';
 export * from './listUsersParams';
 export * from './loginInput';
 export * from './registerInput';
+export * from './relatedTicket';
 export * from './ticket';
 export * from './ticketAttachment';
 export * from './ticketAttachmentDownload';

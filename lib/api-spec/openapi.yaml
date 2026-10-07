@@ -22,6 +22,8 @@ tags:
     description: Admin-managed knowledge documents and grounded assistance
   - name: attachments
     description: Private ticket file uploads and authorized downloads
+  - name: assistant
+    description: AI-first troubleshooting, escalation, and knowledge-gap review
 security:
   - bearerAuth: []
 paths:
@@ -434,6 +436,203 @@ paths:
                 $ref: "#/components/schemas/GroundedAnswer"
         "403":
           description: The user cannot view this ticket
+  /v1/tickets/{ticket_id}/assistant-context:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getTicketAssistantContext
+      tags: [assistant]
+      summary: Get the AI troubleshooting conversation linked to a ticket
+      responses:
+        "200":
+          description: The AI summary, employee answers, retrieval results, and related issues
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/AssistantSession"
+                  - type: "null"
+        "403":
+          description: The user cannot view this ticket
+  /v1/assistant/sessions:
+    get:
+      operationId: listAssistantSessions
+      tags: [assistant]
+      summary: List the authenticated user's troubleshooting sessions
+      responses:
+        "200":
+          description: Recent sessions visible to the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AssistantSession" }
+    post:
+      operationId: createAssistantSession
+      tags: [assistant]
+      summary: Start a persisted AI troubleshooting session
+      responses:
+        "201":
+          description: New support session ready for its first employee message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantSession"
+  /v1/assistant/sessions/{session_id}:
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getAssistantSession
+      tags: [assistant]
+      summary: Resume a troubleshooting session
+      responses:
+        "200":
+          description: Session transcript and current outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantSession"
+        "404":
+          description: Session not found
+  /v1/assistant/sessions/{session_id}/messages:
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: sendAssistantMessage
+      tags: [assistant]
+      summary: Send a reply and continue AI issue triage and grounded retrieval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantMessageInput"
+      responses:
+        "200":
+          description: Updated conversation, diagnosis, sources, and next decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantSession"
+        "503":
+          description: The configured AI provider or local search index is unavailable
+  /v1/assistant/sessions/{session_id}/retry:
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: retryAssistantTurn
+      tags: [assistant]
+      summary: Retry a failed assistant response without duplicating the employee message
+      responses:
+        "200":
+          description: Reprocessed session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantSession"
+  /v1/assistant/sessions/{session_id}/resolution:
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: confirmAssistantResolution
+      tags: [assistant]
+      summary: Record whether the employee's issue was resolved by self-service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantResolveInput"
+      responses:
+        "200":
+          description: Resolved history record or escalation preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantSession"
+  /v1/assistant/sessions/{session_id}/escalate:
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: createEscalatedTicket
+      tags: [assistant]
+      summary: Create and intelligently route the employee-confirmed support ticket
+      responses:
+        "200":
+          description: Escalated ticket and linked conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantSession"
+  /v1/assistant/knowledge-gaps:
+    get:
+      operationId: listKnowledgeGaps
+      tags: [assistant]
+      summary: Review open knowledge gaps (administrators only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+            default: open
+      responses:
+        "200":
+          description: Knowledge gaps and linked escalation tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/KnowledgeGap" }
+  /v1/assistant/knowledge-gaps/{gap_id}/close:
+    parameters:
+      - name: gap_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: closeKnowledgeGap
+      tags: [assistant]
+      summary: Mark a knowledge gap as reviewed (administrators only)
+      responses:
+        "200":
+          description: Updated knowledge gap
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeGap"
   /v1/knowledge/documents/upload-url:
     post:
       operationId: requestKnowledgeUpload
@@ -525,6 +724,27 @@ paths:
                 $ref: "#/components/schemas/GroundedAnswer"
         "503":
           description: The assistant or local knowledge index is unavailable
+  /v1/knowledge/tickets/{ticket_id}/resolution-draft:
+    parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getKnowledgeResolutionDraft
+      tags: [knowledge]
+      summary: Prepare a reviewed article draft from a resolved ticket (administrators only)
+      responses:
+        "200":
+          description: Draft content that can be edited and uploaded as a knowledge article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeResolutionDraft"
+        "409":
+          description: The ticket has no publishable resolution
 components:
   securitySchemes:
     bearerAuth:
@@ -778,4 +998,140 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Citation" }
         needs_human_support: { type: boolean }
+    AssistantMessageInput:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, minLength: 2, maxLength: 4000 }
+    AssistantResolveInput:
+      type: object
+      required: [solved]
+      properties:
+        solved: { type: boolean }
+    AssistantMessage:
+      type: object
+      required: [role, content, created_at]
+      properties:
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        created_at: { type: string, format: date-time }
+        kind: { type: string, enum: [message, follow_up] }
+    AssistantAnalysis:
+      type: object
+      required:
+        - problem_summary
+        - issue_type
+        - category
+        - department
+        - priority
+        - priority_reason
+        - symptoms
+        - timeline
+        - device
+        - operating_system
+        - error_message
+        - affected_users
+        - business_impact
+        - troubleshooting_attempted
+        - likely_area
+        - confidence
+        - escalation_reason
+        - recommended_action
+      properties:
+        problem_summary: { type: string }
+        issue_type: { type: string }
+        category: { $ref: "#/components/schemas/TicketCategory" }
+        department: { type: string }
+        priority: { $ref: "#/components/schemas/TicketPriority" }
+        priority_reason: { type: string }
+        symptoms:
+          type: array
+          items: { type: string }
+        timeline: { type: string }
+        device: { type: string }
+        operating_system: { type: string }
+        error_message: { type: string }
+        affected_users: { type: string }
+        business_impact: { type: string }
+        troubleshooting_attempted:
+          type: array
+          items: { type: string }
+        likely_area: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        escalation_reason: { type: string }
+        recommended_action: { type: string }
+    RelatedTicket:
+      type: object
+      required: [id, number, title, status, relevance]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: string }
+        title: { type: string }
+        status: { $ref: "#/components/schemas/TicketStatus" }
+        resolution: { type: ["string", "null"] }
+        relevance: { type: number, minimum: 0, maximum: 1 }
+    AssistantSession:
+      type: object
+      required:
+        - id
+        - status
+        - messages
+        - analysis
+        - answer
+        - related_tickets
+        - ticket_id
+        - ticket_number
+        - assigned_engineer
+        - created_at
+        - updated_at
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [triage, solution_proposed, escalation_preview, resolved, escalated] }
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/AssistantMessage" }
+        analysis:
+          anyOf:
+            - $ref: "#/components/schemas/AssistantAnalysis"
+            - type: "null"
+        answer:
+          anyOf:
+            - $ref: "#/components/schemas/GroundedAnswer"
+            - type: "null"
+        related_tickets:
+          type: array
+          items: { $ref: "#/components/schemas/RelatedTicket" }
+        ticket_id: { type: ["string", "null"], format: uuid }
+        ticket_number: { type: ["string", "null"] }
+        assigned_engineer:
+          anyOf:
+            - $ref: "#/components/schemas/UserSummary"
+            - type: "null"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    KnowledgeGap:
+      type: object
+      required: [id, session_id, ticket_id, ticket_number, query_text, department, category, priority, reason, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        session_id: { type: string, format: uuid }
+        ticket_id: { type: ["string", "null"], format: uuid }
+        ticket_number: { type: ["string", "null"] }
+        query_text: { type: string }
+        department: { type: string }
+        category: { $ref: "#/components/schemas/TicketCategory" }
+        priority: { $ref: "#/components/schemas/TicketPriority" }
+        reason: { type: string }
+        status: { type: string, enum: [open, closed] }
+        created_at: { type: string, format: date-time }
+    KnowledgeResolutionDraft:
+      type: object
+      required: [ticket_id, ticket_number, title, filename, content_type, markdown]
+      properties:
+        ticket_id: { type: string, format: uuid }
+        ticket_number: { type: string }
+        title: { type: string }
+        filename: { type: string }
+        content_type: { type: string }
+        markdown: { type: string }
 

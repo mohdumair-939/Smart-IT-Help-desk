@@ -523,6 +523,667 @@ export const GetTicketResolutionHelpResponse = zod.object({
 
 
 /**
+ * @summary Get the AI troubleshooting conversation linked to a ticket
+ */
+export const GetTicketAssistantContextParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid()
+})
+
+export const getTicketAssistantContextResponseOneAnalysisOneConfidenceMin = 0;
+export const getTicketAssistantContextResponseOneAnalysisOneConfidenceMax = 1;
+
+export const getTicketAssistantContextResponseOneRelatedTicketsItemRelevanceMin = 0;
+export const getTicketAssistantContextResponseOneRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const GetTicketAssistantContextResponse = zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(getTicketAssistantContextResponseOneAnalysisOneConfidenceMin).max(getTicketAssistantContextResponseOneAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(getTicketAssistantContextResponseOneRelatedTicketsItemRelevanceMin).max(getTicketAssistantContextResponseOneRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+}),zod.null()])
+
+
+/**
+ * @summary List the authenticated user's troubleshooting sessions
+ */
+export const listAssistantSessionsResponseAnalysisOneConfidenceMin = 0;
+export const listAssistantSessionsResponseAnalysisOneConfidenceMax = 1;
+
+export const listAssistantSessionsResponseRelatedTicketsItemRelevanceMin = 0;
+export const listAssistantSessionsResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const ListAssistantSessionsResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(listAssistantSessionsResponseAnalysisOneConfidenceMin).max(listAssistantSessionsResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(listAssistantSessionsResponseRelatedTicketsItemRelevanceMin).max(listAssistantSessionsResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+export const ListAssistantSessionsResponse = zod.array(ListAssistantSessionsResponseItem)
+
+
+/**
+ * @summary Start a persisted AI troubleshooting session
+ */
+export const createAssistantSessionResponseAnalysisOneConfidenceMin = 0;
+export const createAssistantSessionResponseAnalysisOneConfidenceMax = 1;
+
+export const createAssistantSessionResponseRelatedTicketsItemRelevanceMin = 0;
+export const createAssistantSessionResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const CreateAssistantSessionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(createAssistantSessionResponseAnalysisOneConfidenceMin).max(createAssistantSessionResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(createAssistantSessionResponseRelatedTicketsItemRelevanceMin).max(createAssistantSessionResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Resume a troubleshooting session
+ */
+export const GetAssistantSessionParams = zod.object({
+  "session_id": zod.coerce.string().uuid()
+})
+
+export const getAssistantSessionResponseAnalysisOneConfidenceMin = 0;
+export const getAssistantSessionResponseAnalysisOneConfidenceMax = 1;
+
+export const getAssistantSessionResponseRelatedTicketsItemRelevanceMin = 0;
+export const getAssistantSessionResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const GetAssistantSessionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(getAssistantSessionResponseAnalysisOneConfidenceMin).max(getAssistantSessionResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(getAssistantSessionResponseRelatedTicketsItemRelevanceMin).max(getAssistantSessionResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Send a reply and continue AI issue triage and grounded retrieval
+ */
+export const SendAssistantMessageParams = zod.object({
+  "session_id": zod.coerce.string().uuid()
+})
+
+export const sendAssistantMessageBodyMessageMin = 2;
+export const sendAssistantMessageBodyMessageMax = 4000;
+
+
+
+export const SendAssistantMessageBody = zod.object({
+  "message": zod.string().min(sendAssistantMessageBodyMessageMin).max(sendAssistantMessageBodyMessageMax)
+})
+
+export const sendAssistantMessageResponseAnalysisOneConfidenceMin = 0;
+export const sendAssistantMessageResponseAnalysisOneConfidenceMax = 1;
+
+export const sendAssistantMessageResponseRelatedTicketsItemRelevanceMin = 0;
+export const sendAssistantMessageResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const SendAssistantMessageResponse = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(sendAssistantMessageResponseAnalysisOneConfidenceMin).max(sendAssistantMessageResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(sendAssistantMessageResponseRelatedTicketsItemRelevanceMin).max(sendAssistantMessageResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Retry a failed assistant response without duplicating the employee message
+ */
+export const RetryAssistantTurnParams = zod.object({
+  "session_id": zod.coerce.string().uuid()
+})
+
+export const retryAssistantTurnResponseAnalysisOneConfidenceMin = 0;
+export const retryAssistantTurnResponseAnalysisOneConfidenceMax = 1;
+
+export const retryAssistantTurnResponseRelatedTicketsItemRelevanceMin = 0;
+export const retryAssistantTurnResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const RetryAssistantTurnResponse = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(retryAssistantTurnResponseAnalysisOneConfidenceMin).max(retryAssistantTurnResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(retryAssistantTurnResponseRelatedTicketsItemRelevanceMin).max(retryAssistantTurnResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Record whether the employee's issue was resolved by self-service
+ */
+export const ConfirmAssistantResolutionParams = zod.object({
+  "session_id": zod.coerce.string().uuid()
+})
+
+export const ConfirmAssistantResolutionBody = zod.object({
+  "solved": zod.boolean()
+})
+
+export const confirmAssistantResolutionResponseAnalysisOneConfidenceMin = 0;
+export const confirmAssistantResolutionResponseAnalysisOneConfidenceMax = 1;
+
+export const confirmAssistantResolutionResponseRelatedTicketsItemRelevanceMin = 0;
+export const confirmAssistantResolutionResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const ConfirmAssistantResolutionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(confirmAssistantResolutionResponseAnalysisOneConfidenceMin).max(confirmAssistantResolutionResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(confirmAssistantResolutionResponseRelatedTicketsItemRelevanceMin).max(confirmAssistantResolutionResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Create and intelligently route the employee-confirmed support ticket
+ */
+export const CreateEscalatedTicketParams = zod.object({
+  "session_id": zod.coerce.string().uuid()
+})
+
+export const createEscalatedTicketResponseAnalysisOneConfidenceMin = 0;
+export const createEscalatedTicketResponseAnalysisOneConfidenceMax = 1;
+
+export const createEscalatedTicketResponseRelatedTicketsItemRelevanceMin = 0;
+export const createEscalatedTicketResponseRelatedTicketsItemRelevanceMax = 1;
+
+
+
+export const CreateEscalatedTicketResponse = zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['triage', 'solution_proposed', 'escalation_preview', 'resolved', 'escalated']),
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "created_at": zod.coerce.date(),
+  "kind": zod.enum(['message', 'follow_up']).optional()
+})),
+  "analysis": zod.union([zod.object({
+  "problem_summary": zod.string(),
+  "issue_type": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "department": zod.string(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "priority_reason": zod.string(),
+  "symptoms": zod.array(zod.string()),
+  "timeline": zod.string(),
+  "device": zod.string(),
+  "operating_system": zod.string(),
+  "error_message": zod.string(),
+  "affected_users": zod.string(),
+  "business_impact": zod.string(),
+  "troubleshooting_attempted": zod.array(zod.string()),
+  "likely_area": zod.string(),
+  "confidence": zod.number().min(createEscalatedTicketResponseAnalysisOneConfidenceMin).max(createEscalatedTicketResponseAnalysisOneConfidenceMax),
+  "escalation_reason": zod.string(),
+  "recommended_action": zod.string()
+}),zod.null()]),
+  "answer": zod.union([zod.object({
+  "answer": zod.string(),
+  "citations": zod.array(zod.object({
+  "document_id": zod.string().uuid(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "excerpt": zod.string(),
+  "chunk_index": zod.number().int(),
+  "relevance": zod.number()
+})),
+  "needs_human_support": zod.boolean()
+}),zod.null()]),
+  "related_tickets": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "number": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['open', 'in_progress', 'waiting_on_requester', 'resolved', 'closed']),
+  "resolution": zod.string().nullish(),
+  "relevance": zod.number().min(createEscalatedTicketResponseRelatedTicketsItemRelevanceMin).max(createEscalatedTicketResponseRelatedTicketsItemRelevanceMax)
+})),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "assigned_engineer": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "role": zod.enum(['employee', 'support_engineer', 'admin'])
+}),zod.null()]),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Review open knowledge gaps (administrators only)
+ */
+export const listKnowledgeGapsQueryStatusDefault = `open`;
+
+export const ListKnowledgeGapsQueryParams = zod.object({
+  "status": zod.enum(['open', 'closed', 'all']).default(listKnowledgeGapsQueryStatusDefault)
+})
+
+export const ListKnowledgeGapsResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "session_id": zod.string().uuid(),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "query_text": zod.string(),
+  "department": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "reason": zod.string(),
+  "status": zod.enum(['open', 'closed']),
+  "created_at": zod.coerce.date()
+})
+export const ListKnowledgeGapsResponse = zod.array(ListKnowledgeGapsResponseItem)
+
+
+/**
+ * @summary Mark a knowledge gap as reviewed (administrators only)
+ */
+export const CloseKnowledgeGapParams = zod.object({
+  "gap_id": zod.coerce.string().uuid()
+})
+
+export const CloseKnowledgeGapResponse = zod.object({
+  "id": zod.string().uuid(),
+  "session_id": zod.string().uuid(),
+  "ticket_id": zod.string().uuid().nullable(),
+  "ticket_number": zod.string().nullable(),
+  "query_text": zod.string(),
+  "department": zod.string(),
+  "category": zod.enum(['account_access', 'hardware', 'network', 'software', 'email', 'security', 'other']),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "reason": zod.string(),
+  "status": zod.enum(['open', 'closed']),
+  "created_at": zod.coerce.date()
+})
+
+
+/**
  * @summary Request a private App Storage upload URL (administrators only)
  */
 export const requestKnowledgeUploadBodyTitleMin = 2;
@@ -620,6 +1281,23 @@ export const SearchKnowledgeResponse = zod.object({
   "relevance": zod.number()
 })),
   "needs_human_support": zod.boolean()
+})
+
+
+/**
+ * @summary Prepare a reviewed article draft from a resolved ticket (administrators only)
+ */
+export const GetKnowledgeResolutionDraftParams = zod.object({
+  "ticket_id": zod.coerce.string().uuid()
+})
+
+export const GetKnowledgeResolutionDraftResponse = zod.object({
+  "ticket_id": zod.string().uuid(),
+  "ticket_number": zod.string(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "content_type": zod.string(),
+  "markdown": zod.string()
 })
 
 

@@ -6,6 +6,7 @@ from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.knowledge_base import retrieve_chunks
@@ -13,10 +14,19 @@ from app.schemas import CitationRead, GroundedAnswer
 
 logger = logging.getLogger("smart_help_desk.assistant")
 MODEL_NAME = os.environ.get("OPENAI_MODEL", "gpt-5.4-mini")
+try:
+    MIN_RELEVANCE = min(1.0, max(0.0, float(os.environ.get("RAG_MIN_RELEVANCE", "0.32"))))
+except ValueError:
+    MIN_RELEVANCE = 0.32
 
 
 class AssistantUnavailable(RuntimeError):
     pass
+
+
+class GroundedDraft(BaseModel):
+    answer: str
+    needs_human_support: bool
 
 
 def _message_text(content: str | list[dict]) -> str:
@@ -39,11 +49,21 @@ def grounded_answer(
     except Exception as exc:
         logger.exception("Knowledge retrieval failed (%s)", type(exc).__name__)
         raise AssistantUnavailable("The knowledge index is temporarily unavailable.") from exc
+    return grounded_answer_from_hits(question, hits, ticket_context)
 
+
+def grounded_answer_from_hits(
+    question: str,
+    hits: list[tuple[object, float]],
+    ticket_context: str | None = None,
+    allow_generation: bool = True,
+) -> GroundedAnswer:
     citations: list[CitationRead] = []
     source_blocks: list[str] = []
     seen_sources: set[tuple[str, int]] = set()
-    for index, (document, score) in enumerate(hits, start=1):
+    for document, score in hits:
+        if score < MIN_RELEVANCE:
+            continue
         metadata = document.metadata
         document_id = metadata.get("document_id")
         try:
@@ -66,6 +86,7 @@ def grounded_answer(
                 relevance=round(max(0.0, min(1.0, score)), 3),
             )
         )
+        index = len(citations)
         source_blocks.append(
             f"[S{index}] {metadata.get('title') or 'Knowledge article'} "
             f"({metadata.get('filename') or 'document'}, passage {chunk_index + 1})\n"
@@ -81,9 +102,15 @@ def grounded_answer(
             citations=[],
             needs_human_support=True,
         )
+    if not allow_generation:
+        return GroundedAnswer(
+            answer="This issue needs review by the IT support team.",
+            citations=citations,
+            needs_human_support=True,
+        )
 
     try:
-        model = ChatOpenAI(model=MODEL_NAME, max_completion_tokens=8192)
+        model = ChatOpenAI(model=MODEL_NAME, max_completion_tokens=2000).with_structured_output(GroundedDraft)
         response = model.invoke(
             [
                 SystemMessage(
@@ -93,7 +120,7 @@ def grounded_answer(
                         "steps, policies, URLs, or system details. Give safe, reversible troubleshooting steps, "
                         "flag any step that could risk data loss or weaken security, and cite factual claims using "
                         "the exact [S1] style labels. If the passages do not support a useful answer, say so and "
-                        "recommend contacting IT. Do not ask for passwords or secrets."
+                        "set needs_human_support=true. Otherwise set it false. Do not ask for passwords or secrets."
                     )
                 ),
                 HumanMessage(
@@ -105,11 +132,19 @@ def grounded_answer(
                 ),
             ]
         )
-        answer = _message_text(response.content)
+        if isinstance(response, GroundedDraft):
+            draft = response
+        else:
+            draft = GroundedDraft.model_validate(response)
+        answer = _message_text(draft.answer)
     except Exception as exc:
         logger.exception("Grounded answer generation failed (%s)", type(exc).__name__)
         raise AssistantUnavailable("The AI assistant is temporarily unavailable.") from exc
 
     if not answer:
         raise AssistantUnavailable("The AI assistant did not return an answer.")
-    return GroundedAnswer(answer=answer[:12000], citations=citations, needs_human_support=False)
+    return GroundedAnswer(
+        answer=answer[:12000],
+        citations=citations,
+        needs_human_support=draft.needs_human_support,
+    )

@@ -253,3 +253,85 @@ class TicketAttachmentRead(BaseModel):
 
 class TicketAttachmentDownload(BaseModel):
     download_url: str
+
+
+class AssistantMessageInput(BaseModel):
+    message: str = Field(min_length=2, max_length=4000)
+
+
+class AssistantResolveInput(BaseModel):
+    solved: bool
+
+
+class AssistantMessageRead(BaseModel):
+    role: str
+    content: str
+    created_at: str
+    kind: str = "message"
+
+
+class AssistantAnalysisRead(BaseModel):
+    problem_summary: str
+    issue_type: str
+    category: TicketCategory
+    department: str
+    priority: TicketPriority
+    priority_reason: str
+    symptoms: list[str]
+    timeline: str
+    device: str
+    operating_system: str
+    error_message: str
+    affected_users: str
+    business_impact: str
+    troubleshooting_attempted: list[str]
+    likely_area: str
+    confidence: float
+    escalation_reason: str
+    recommended_action: str
+
+
+class RelatedTicketRead(BaseModel):
+    id: UUID
+    number: str
+    title: str
+    status: TicketStatus
+    resolution: str | None
+    relevance: float
+
+
+class AssistantSessionRead(BaseModel):
+    id: UUID
+    status: str
+    messages: list[AssistantMessageRead]
+    analysis: AssistantAnalysisRead | None
+    answer: GroundedAnswer | None
+    related_tickets: list[RelatedTicketRead]
+    ticket_id: UUID | None
+    ticket_number: str | None
+    assigned_engineer: UserSummary | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class KnowledgeGapRead(BaseModel):
+    id: UUID
+    session_id: UUID
+    ticket_id: UUID | None
+    ticket_number: str | None
+    query_text: str
+    department: str
+    category: TicketCategory
+    priority: TicketPriority
+    reason: str
+    status: str
+    created_at: datetime
+
+
+class KnowledgeResolutionDraftRead(BaseModel):
+    ticket_id: UUID
+    ticket_number: str
+    title: str
+    filename: str
+    content_type: str
+    markdown: str

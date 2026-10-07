@@ -1,15 +1,19 @@
 import unittest
+from datetime import UTC, datetime
 from types import SimpleNamespace
+from uuid import uuid4
 from unittest.mock import patch
 
 from fastapi import HTTPException
 from langchain_core.documents import Document
 
-from app.assistant import grounded_answer
+from app.assistant import GroundedDraft, grounded_answer
 from app.knowledge_base import DocumentProcessingError, extract_text, split_text
-from app.models import User
+from app.models import AssistantSession, User
 from app.routers.attachments import _safe_filename
 from app.security import require_admin
+from app.support_assistant import process_current_turn
+from app.triage import IssueAnalysis, retrieval_query
 
 
 class KnowledgeExtractionTests(unittest.TestCase):
@@ -59,8 +63,14 @@ class GroundedAnswerTests(unittest.TestCase):
             def __init__(self, **_: object) -> None:
                 pass
 
+            def with_structured_output(self, _: object) -> "FakeModel":
+                return self
+
             def invoke(self, _: object) -> SimpleNamespace:
-                return SimpleNamespace(content="Select Reconnect in printer settings [S1].")
+                return GroundedDraft(
+                    answer="Select Reconnect in printer settings [S1].",
+                    needs_human_support=False,
+                )
 
         with patch("app.assistant.retrieve_chunks", return_value=[(source, 0.84)]), patch(
             "app.assistant.ChatOpenAI", FakeModel
@@ -87,6 +97,91 @@ class AttachmentValidationTests(unittest.TestCase):
         self.assertEqual(_safe_filename("../../network trace.LOG"), "network-trace.log")
         with self.assertRaises(HTTPException):
             _safe_filename("run-me.exe")
+
+
+class IssueTriageTests(unittest.TestCase):
+    def test_retrieval_query_uses_detected_details(self) -> None:
+        analysis = IssueAnalysis(
+            problem_summary="VPN fails after a password reset",
+            issue_type="remote access authentication",
+            category="network",
+            department="Network Support",
+            priority="high",
+            priority_reason="The employee cannot access work systems.",
+            symptoms=["VPN connection is rejected"],
+            timeline="Since this morning",
+            device="Laptop",
+            operating_system="Windows",
+            error_message="Authentication failed",
+            affected_users="One employee",
+            business_impact="Blocked from remote work",
+            troubleshooting_attempted=["Restarted VPN client"],
+            likely_area="VPN credential or MFA sync",
+            confidence=0.83,
+            needs_more_info=False,
+            follow_up_question="",
+            ready_for_search=True,
+            requires_human=False,
+            escalation_reason="",
+            recommended_action="Check the approved VPN reset guidance.",
+        )
+        query = retrieval_query(analysis)
+        self.assertIn("VPN fails after a password reset", query)
+        self.assertIn("Authentication failed", query)
+        self.assertIn("Restarted VPN client", query)
+
+    def test_sensitive_issue_escalates_without_waiting_for_knowledge_search(self) -> None:
+        user_id = uuid4()
+        user = User(id=user_id, name="Requester", role="employee", email="requester@example.com", department="Finance")
+        now = datetime.now(UTC)
+        session = AssistantSession(
+            id=uuid4(),
+            requester_id=user_id,
+            ticket_id=None,
+            status="triage",
+            messages=[{"role": "user", "content": "I think someone accessed my account.", "created_at": now.isoformat()}],
+            analysis=None,
+            answer=None,
+            retrieved_sources=[],
+            related_tickets=[],
+            created_at=now,
+            updated_at=now,
+        )
+        analysis = IssueAnalysis(
+            problem_summary="Suspected unauthorized account access",
+            issue_type="account security incident",
+            category="security",
+            department="Security",
+            priority="urgent",
+            priority_reason="A possible unauthorized login may put company data at risk.",
+            symptoms=["Employee suspects an unknown person used the account"],
+            timeline="Not provided",
+            device="",
+            operating_system="",
+            error_message="",
+            affected_users="Potentially one account",
+            business_impact="Possible account compromise",
+            troubleshooting_attempted=[],
+            likely_area="Account security",
+            confidence=0.91,
+            needs_more_info=False,
+            follow_up_question="",
+            ready_for_search=False,
+            requires_human=True,
+            escalation_reason="A security engineer should review the suspected unauthorized access.",
+            recommended_action="Contact the security team immediately and follow incident-response procedures.",
+        )
+
+        with patch("app.support_assistant.analyze_issue", return_value=analysis), patch(
+            "app.support_assistant.retrieve_chunks"
+        ) as retrieval, patch("app.support_assistant.find_related_tickets") as related:
+            result = process_current_turn(SimpleNamespace(commit=lambda: None, refresh=lambda _: None), session, user)
+
+        self.assertEqual(result.status, "escalation_preview")
+        self.assertEqual(result.analysis.category, "security")
+        self.assertTrue(result.answer.needs_human_support)
+        retrieval.assert_not_called()
+        related.assert_not_called()
 
 
 if __name__ == "__main__":

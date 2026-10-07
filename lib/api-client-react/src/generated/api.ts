@@ -21,15 +21,21 @@ import type {
 
 import type {
   ActivityItem,
+  AssistantMessageInput,
+  AssistantResolveInput,
+  AssistantSession,
   AuthResponse,
   CommentInput,
   DashboardSummary,
   GroundedAnswer,
   HealthStatus,
   KnowledgeDocument,
+  KnowledgeGap,
+  KnowledgeResolutionDraft,
   KnowledgeSearchInput,
   KnowledgeUploadInput,
   KnowledgeUploadResponse,
+  ListKnowledgeGapsParams,
   ListRecentActivityParams,
   ListTicketsParams,
   ListUsersParams,
@@ -1629,6 +1635,795 @@ export const useGetTicketResolutionHelp = <TError = ErrorType<void>,
       return useMutation(getGetTicketResolutionHelpMutationOptions(options));
     }
 
+export const getGetTicketAssistantContextUrl = (ticketId: string,) => {
+
+
+
+
+  return `/api/v1/tickets/${ticketId}/assistant-context`
+}
+
+/**
+ * @summary Get the AI troubleshooting conversation linked to a ticket
+ */
+export const getTicketAssistantContext = async (ticketId: string, options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession | null> => {
+
+  return customFetch<AssistantSession | null>(getGetTicketAssistantContextUrl(ticketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTicketAssistantContextQueryKey = (ticketId: string,) => {
+    return [
+    `/api/v1/tickets/${ticketId}/assistant-context`
+    ] as const;
+    }
+
+
+export const getGetTicketAssistantContextQueryOptions = <TData = Awaited<ReturnType<typeof getTicketAssistantContext>>, TError = ErrorType<void>>(ticketId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTicketAssistantContext>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTicketAssistantContextQueryKey(ticketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTicketAssistantContext>>> = ({ signal }) => getTicketAssistantContext(ticketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: ticketId !== null && ticketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTicketAssistantContext>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTicketAssistantContextQueryResult = NonNullable<Awaited<ReturnType<typeof getTicketAssistantContext>>>
+export type GetTicketAssistantContextQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the AI troubleshooting conversation linked to a ticket
+ */
+
+export function useGetTicketAssistantContext<TData = Awaited<ReturnType<typeof getTicketAssistantContext>>, TError = ErrorType<void>>(
+ ticketId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTicketAssistantContext>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTicketAssistantContextQueryOptions(ticketId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAssistantSessionsUrl = () => {
+
+
+
+
+  return `/api/v1/assistant/sessions`
+}
+
+/**
+ * @summary List the authenticated user's troubleshooting sessions
+ */
+export const listAssistantSessions = async ( options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession[]> => {
+
+  return customFetch<AssistantSession[]>(getListAssistantSessionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAssistantSessionsQueryKey = () => {
+    return [
+    `/api/v1/assistant/sessions`
+    ] as const;
+    }
+
+
+export const getListAssistantSessionsQueryOptions = <TData = Awaited<ReturnType<typeof listAssistantSessions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAssistantSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAssistantSessionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAssistantSessions>>> = ({ signal }) => listAssistantSessions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAssistantSessions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAssistantSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAssistantSessions>>>
+export type ListAssistantSessionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List the authenticated user's troubleshooting sessions
+ */
+
+export function useListAssistantSessions<TData = Awaited<ReturnType<typeof listAssistantSessions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAssistantSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAssistantSessionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAssistantSessionUrl = () => {
+
+
+
+
+  return `/api/v1/assistant/sessions`
+}
+
+/**
+ * @summary Start a persisted AI troubleshooting session
+ */
+export const createAssistantSession = async ( options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession> => {
+
+  return customFetch<AssistantSession>(getCreateAssistantSessionUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCreateAssistantSessionMutationKey = () => ['createAssistantSession'] as const;
+
+export const getCreateAssistantSessionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAssistantSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAssistantSession>>, TError,void, TContext> => {
+
+const mutationKey = getCreateAssistantSessionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAssistantSession>>, void> = () => {
+
+
+          return  createAssistantSession(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAssistantSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createAssistantSession>>>
+
+    export type CreateAssistantSessionMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Start a persisted AI troubleshooting session
+ */
+export const useCreateAssistantSession = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAssistantSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAssistantSession>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateAssistantSessionMutationOptions(options));
+    }
+
+export const getGetAssistantSessionUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/assistant/sessions/${sessionId}`
+}
+
+/**
+ * @summary Resume a troubleshooting session
+ */
+export const getAssistantSession = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession> => {
+
+  return customFetch<AssistantSession>(getGetAssistantSessionUrl(sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAssistantSessionQueryKey = (sessionId: string,) => {
+    return [
+    `/api/v1/assistant/sessions/${sessionId}`
+    ] as const;
+    }
+
+
+export const getGetAssistantSessionQueryOptions = <TData = Awaited<ReturnType<typeof getAssistantSession>>, TError = ErrorType<void>>(sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAssistantSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAssistantSessionQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAssistantSession>>> = ({ signal }) => getAssistantSession(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAssistantSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAssistantSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getAssistantSession>>>
+export type GetAssistantSessionQueryError = ErrorType<void>
+
+
+/**
+ * @summary Resume a troubleshooting session
+ */
+
+export function useGetAssistantSession<TData = Awaited<ReturnType<typeof getAssistantSession>>, TError = ErrorType<void>>(
+ sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAssistantSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAssistantSessionQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendAssistantMessageUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/assistant/sessions/${sessionId}/messages`
+}
+
+/**
+ * @summary Send a reply and continue AI issue triage and grounded retrieval
+ */
+export const sendAssistantMessage = async (sessionId: string,
+    assistantMessageInput: AssistantMessageInput, options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AssistantSession>(getSendAssistantMessageUrl(sessionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(assistantMessageInput)
+  }
+);}
+
+
+
+
+
+export const getSendAssistantMessageMutationKey = () => ['sendAssistantMessage'] as const;
+
+export const getSendAssistantMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendAssistantMessage>>, TError,SendAssistantMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendAssistantMessage>>, TError,SendAssistantMessageMutationVariables, TContext> => {
+
+const mutationKey = getSendAssistantMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendAssistantMessage>>, SendAssistantMessageMutationVariables> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  sendAssistantMessage(sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendAssistantMessageMutationResult = NonNullable<Awaited<ReturnType<typeof sendAssistantMessage>>>
+    export type SendAssistantMessageMutationBody = BodyType<AssistantMessageInput>
+    export type SendAssistantMessageMutationError = ErrorType<void>
+    export type SendAssistantMessageMutationVariables = {sessionId: string;data: BodyType<AssistantMessageInput>}
+
+    /**
+ * @summary Send a reply and continue AI issue triage and grounded retrieval
+ */
+export const useSendAssistantMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendAssistantMessage>>, TError,SendAssistantMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendAssistantMessage>>,
+        TError,
+        SendAssistantMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendAssistantMessageMutationOptions(options));
+    }
+
+export const getRetryAssistantTurnUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/assistant/sessions/${sessionId}/retry`
+}
+
+/**
+ * @summary Retry a failed assistant response without duplicating the employee message
+ */
+export const retryAssistantTurn = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession> => {
+
+  return customFetch<AssistantSession>(getRetryAssistantTurnUrl(sessionId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRetryAssistantTurnMutationKey = () => ['retryAssistantTurn'] as const;
+
+export const getRetryAssistantTurnMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retryAssistantTurn>>, TError,RetryAssistantTurnMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof retryAssistantTurn>>, TError,RetryAssistantTurnMutationVariables, TContext> => {
+
+const mutationKey = getRetryAssistantTurnMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof retryAssistantTurn>>, RetryAssistantTurnMutationVariables> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  retryAssistantTurn(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RetryAssistantTurnMutationResult = NonNullable<Awaited<ReturnType<typeof retryAssistantTurn>>>
+
+    export type RetryAssistantTurnMutationError = ErrorType<unknown>
+    export type RetryAssistantTurnMutationVariables = {sessionId: string}
+
+    /**
+ * @summary Retry a failed assistant response without duplicating the employee message
+ */
+export const useRetryAssistantTurn = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retryAssistantTurn>>, TError,RetryAssistantTurnMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof retryAssistantTurn>>,
+        TError,
+        RetryAssistantTurnMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRetryAssistantTurnMutationOptions(options));
+    }
+
+export const getConfirmAssistantResolutionUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/assistant/sessions/${sessionId}/resolution`
+}
+
+/**
+ * @summary Record whether the employee's issue was resolved by self-service
+ */
+export const confirmAssistantResolution = async (sessionId: string,
+    assistantResolveInput: AssistantResolveInput, options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AssistantSession>(getConfirmAssistantResolutionUrl(sessionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(assistantResolveInput)
+  }
+);}
+
+
+
+
+
+export const getConfirmAssistantResolutionMutationKey = () => ['confirmAssistantResolution'] as const;
+
+export const getConfirmAssistantResolutionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmAssistantResolution>>, TError,ConfirmAssistantResolutionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmAssistantResolution>>, TError,ConfirmAssistantResolutionMutationVariables, TContext> => {
+
+const mutationKey = getConfirmAssistantResolutionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmAssistantResolution>>, ConfirmAssistantResolutionMutationVariables> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  confirmAssistantResolution(sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmAssistantResolutionMutationResult = NonNullable<Awaited<ReturnType<typeof confirmAssistantResolution>>>
+    export type ConfirmAssistantResolutionMutationBody = BodyType<AssistantResolveInput>
+    export type ConfirmAssistantResolutionMutationError = ErrorType<unknown>
+    export type ConfirmAssistantResolutionMutationVariables = {sessionId: string;data: BodyType<AssistantResolveInput>}
+
+    /**
+ * @summary Record whether the employee's issue was resolved by self-service
+ */
+export const useConfirmAssistantResolution = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmAssistantResolution>>, TError,ConfirmAssistantResolutionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof confirmAssistantResolution>>,
+        TError,
+        ConfirmAssistantResolutionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmAssistantResolutionMutationOptions(options));
+    }
+
+export const getCreateEscalatedTicketUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/v1/assistant/sessions/${sessionId}/escalate`
+}
+
+/**
+ * @summary Create and intelligently route the employee-confirmed support ticket
+ */
+export const createEscalatedTicket = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<AssistantSession> => {
+
+  return customFetch<AssistantSession>(getCreateEscalatedTicketUrl(sessionId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCreateEscalatedTicketMutationKey = () => ['createEscalatedTicket'] as const;
+
+export const getCreateEscalatedTicketMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEscalatedTicket>>, TError,CreateEscalatedTicketMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createEscalatedTicket>>, TError,CreateEscalatedTicketMutationVariables, TContext> => {
+
+const mutationKey = getCreateEscalatedTicketMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEscalatedTicket>>, CreateEscalatedTicketMutationVariables> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  createEscalatedTicket(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateEscalatedTicketMutationResult = NonNullable<Awaited<ReturnType<typeof createEscalatedTicket>>>
+
+    export type CreateEscalatedTicketMutationError = ErrorType<unknown>
+    export type CreateEscalatedTicketMutationVariables = {sessionId: string}
+
+    /**
+ * @summary Create and intelligently route the employee-confirmed support ticket
+ */
+export const useCreateEscalatedTicket = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEscalatedTicket>>, TError,CreateEscalatedTicketMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createEscalatedTicket>>,
+        TError,
+        CreateEscalatedTicketMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateEscalatedTicketMutationOptions(options));
+    }
+
+export const getListKnowledgeGapsUrl = (params?: ListKnowledgeGapsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/assistant/knowledge-gaps?${stringifiedParams}` : `/api/v1/assistant/knowledge-gaps`
+}
+
+/**
+ * @summary Review open knowledge gaps (administrators only)
+ */
+export const listKnowledgeGaps = async (params?: ListKnowledgeGapsParams, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeGap[]> => {
+
+  return customFetch<KnowledgeGap[]>(getListKnowledgeGapsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListKnowledgeGapsQueryKey = (params?: ListKnowledgeGapsParams,) => {
+    return [
+    `/api/v1/assistant/knowledge-gaps`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListKnowledgeGapsQueryOptions = <TData = Awaited<ReturnType<typeof listKnowledgeGaps>>, TError = ErrorType<unknown>>(params?: ListKnowledgeGapsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKnowledgeGaps>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListKnowledgeGapsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listKnowledgeGaps>>> = ({ signal }) => listKnowledgeGaps(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listKnowledgeGaps>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListKnowledgeGapsQueryResult = NonNullable<Awaited<ReturnType<typeof listKnowledgeGaps>>>
+export type ListKnowledgeGapsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Review open knowledge gaps (administrators only)
+ */
+
+export function useListKnowledgeGaps<TData = Awaited<ReturnType<typeof listKnowledgeGaps>>, TError = ErrorType<unknown>>(
+ params?: ListKnowledgeGapsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKnowledgeGaps>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListKnowledgeGapsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCloseKnowledgeGapUrl = (gapId: string,) => {
+
+
+
+
+  return `/api/v1/assistant/knowledge-gaps/${gapId}/close`
+}
+
+/**
+ * @summary Mark a knowledge gap as reviewed (administrators only)
+ */
+export const closeKnowledgeGap = async (gapId: string, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeGap> => {
+
+  return customFetch<KnowledgeGap>(getCloseKnowledgeGapUrl(gapId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCloseKnowledgeGapMutationKey = () => ['closeKnowledgeGap'] as const;
+
+export const getCloseKnowledgeGapMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeKnowledgeGap>>, TError,CloseKnowledgeGapMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof closeKnowledgeGap>>, TError,CloseKnowledgeGapMutationVariables, TContext> => {
+
+const mutationKey = getCloseKnowledgeGapMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeKnowledgeGap>>, CloseKnowledgeGapMutationVariables> = (props) => {
+          const {gapId} = props ?? {};
+
+          return  closeKnowledgeGap(gapId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CloseKnowledgeGapMutationResult = NonNullable<Awaited<ReturnType<typeof closeKnowledgeGap>>>
+
+    export type CloseKnowledgeGapMutationError = ErrorType<unknown>
+    export type CloseKnowledgeGapMutationVariables = {gapId: string}
+
+    /**
+ * @summary Mark a knowledge gap as reviewed (administrators only)
+ */
+export const useCloseKnowledgeGap = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeKnowledgeGap>>, TError,CloseKnowledgeGapMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof closeKnowledgeGap>>,
+        TError,
+        CloseKnowledgeGapMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCloseKnowledgeGapMutationOptions(options));
+    }
+
 export const getRequestKnowledgeUploadUrl = () => {
 
 
@@ -2029,4 +2824,81 @@ export const useSearchKnowledge = <TError = ErrorType<void>,
       > => {
       return useMutation(getSearchKnowledgeMutationOptions(options));
     }
+
+export const getGetKnowledgeResolutionDraftUrl = (ticketId: string,) => {
+
+
+
+
+  return `/api/v1/knowledge/tickets/${ticketId}/resolution-draft`
+}
+
+/**
+ * @summary Prepare a reviewed article draft from a resolved ticket (administrators only)
+ */
+export const getKnowledgeResolutionDraft = async (ticketId: string, options?: Parameters<typeof customFetch>[1]): Promise<KnowledgeResolutionDraft> => {
+
+  return customFetch<KnowledgeResolutionDraft>(getGetKnowledgeResolutionDraftUrl(ticketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKnowledgeResolutionDraftQueryKey = (ticketId: string,) => {
+    return [
+    `/api/v1/knowledge/tickets/${ticketId}/resolution-draft`
+    ] as const;
+    }
+
+
+export const getGetKnowledgeResolutionDraftQueryOptions = <TData = Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>, TError = ErrorType<void>>(ticketId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKnowledgeResolutionDraftQueryKey(ticketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>> = ({ signal }) => getKnowledgeResolutionDraft(ticketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: ticketId !== null && ticketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKnowledgeResolutionDraftQueryResult = NonNullable<Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>>
+export type GetKnowledgeResolutionDraftQueryError = ErrorType<void>
+
+
+/**
+ * @summary Prepare a reviewed article draft from a resolved ticket (administrators only)
+ */
+
+export function useGetKnowledgeResolutionDraft<TData = Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>, TError = ErrorType<void>>(
+ ticketId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKnowledgeResolutionDraft>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKnowledgeResolutionDraftQueryOptions(ticketId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

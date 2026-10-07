@@ -352,6 +352,140 @@ export interface GroundedAnswer {
   needs_human_support: boolean;
 }
 
+export interface AssistantMessageInput {
+  /**
+     * @minLength 2
+     * @maxLength 4000
+     */
+  message: string;
+}
+
+export interface AssistantResolveInput {
+  solved: boolean;
+}
+
+export type AssistantMessageRole = typeof AssistantMessageRole[keyof typeof AssistantMessageRole];
+
+
+export const AssistantMessageRole = {
+  user: 'user',
+  assistant: 'assistant',
+} as const;
+
+export type AssistantMessageKind = typeof AssistantMessageKind[keyof typeof AssistantMessageKind];
+
+
+export const AssistantMessageKind = {
+  message: 'message',
+  follow_up: 'follow_up',
+} as const;
+
+export interface AssistantMessage {
+  role: AssistantMessageRole;
+  content: string;
+  created_at: string;
+  kind?: AssistantMessageKind;
+}
+
+export interface AssistantAnalysis {
+  problem_summary: string;
+  issue_type: string;
+  category: TicketCategory;
+  department: string;
+  priority: TicketPriority;
+  priority_reason: string;
+  symptoms: string[];
+  timeline: string;
+  device: string;
+  operating_system: string;
+  error_message: string;
+  affected_users: string;
+  business_impact: string;
+  troubleshooting_attempted: string[];
+  likely_area: string;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  confidence: number;
+  escalation_reason: string;
+  recommended_action: string;
+}
+
+export interface RelatedTicket {
+  id: string;
+  number: string;
+  title: string;
+  status: TicketStatus;
+  /** @nullable */
+  resolution?: string | null;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  relevance: number;
+}
+
+export type AssistantSessionStatus = typeof AssistantSessionStatus[keyof typeof AssistantSessionStatus];
+
+
+export const AssistantSessionStatus = {
+  triage: 'triage',
+  solution_proposed: 'solution_proposed',
+  escalation_preview: 'escalation_preview',
+  resolved: 'resolved',
+  escalated: 'escalated',
+} as const;
+
+export interface AssistantSession {
+  id: string;
+  status: AssistantSessionStatus;
+  messages: AssistantMessage[];
+  analysis: AssistantAnalysis | null;
+  answer: GroundedAnswer | null;
+  related_tickets: RelatedTicket[];
+  /** @nullable */
+  ticket_id: string | null;
+  /** @nullable */
+  ticket_number: string | null;
+  assigned_engineer: UserSummary | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type KnowledgeGapStatus = typeof KnowledgeGapStatus[keyof typeof KnowledgeGapStatus];
+
+
+export const KnowledgeGapStatus = {
+  open: 'open',
+  closed: 'closed',
+} as const;
+
+export interface KnowledgeGap {
+  id: string;
+  session_id: string;
+  /** @nullable */
+  ticket_id: string | null;
+  /** @nullable */
+  ticket_number: string | null;
+  query_text: string;
+  department: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  reason: string;
+  status: KnowledgeGapStatus;
+  created_at: string;
+}
+
+export interface KnowledgeResolutionDraft {
+  ticket_id: string;
+  ticket_number: string;
+  title: string;
+  filename: string;
+  content_type: string;
+  markdown: string;
+}
+
 export type ListRecentActivityParams = {
 /**
  * @minimum 1
@@ -380,4 +514,17 @@ priority?: TicketPriority;
 category?: TicketCategory;
 department?: string;
 };
+
+export type ListKnowledgeGapsParams = {
+status?: ListKnowledgeGapsStatus;
+};
+
+export type ListKnowledgeGapsStatus = typeof ListKnowledgeGapsStatus[keyof typeof ListKnowledgeGapsStatus];
+
+
+export const ListKnowledgeGapsStatus = {
+  open: 'open',
+  closed: 'closed',
+  all: 'all',
+} as const;
 

@@ -64,6 +64,22 @@ def vector_store() -> Chroma:
         return _vector_store
 
 
+def embed_for_similarity(texts: list[str]) -> list[list[float]]:
+    with _index_lock:
+        vector_store()
+        if _embeddings is None:
+            raise RuntimeError("The local embedding model was not initialized.")
+        return _embeddings.embed_documents(texts)
+
+
+def embed_query_for_similarity(text: str) -> list[float]:
+    with _index_lock:
+        vector_store()
+        if _embeddings is None:
+            raise RuntimeError("The local embedding model was not initialized.")
+        return _embeddings.embed_query(text)
+
+
 def extract_text(filename: str, content: bytes) -> str:
     suffix = Path(filename).suffix.lower()
     try:

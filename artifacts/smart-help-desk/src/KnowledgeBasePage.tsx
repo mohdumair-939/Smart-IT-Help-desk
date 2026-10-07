@@ -1,13 +1,17 @@
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Bot, FileText, LoaderCircle, Search, Sparkles, Trash2, UploadCloud } from 'lucide-react';
+import { Link } from 'wouter';
+import { AlertTriangle, ArrowRight, BookOpen, Bot, Check, FileText, LoaderCircle, Search, Sparkles, Trash2, UploadCloud } from 'lucide-react';
 import {
+  getListKnowledgeGapsQueryKey,
   getListKnowledgeDocumentsQueryKey,
+  useCloseKnowledgeGap,
   useDeleteKnowledgeDocument,
   useGetCurrentUser,
   useGetTicketResolutionHelp,
   useIngestKnowledgeDocument,
   useListKnowledgeDocuments,
+  useListKnowledgeGaps,
   useRequestKnowledgeUpload,
   useSearchKnowledge,
   type Citation,
@@ -27,7 +31,7 @@ export function CitationList({ citations }: { citations: Citation[] }) {
   if (!citations.length) return null;
   return <div className="citation-list" aria-label="Knowledge base citations">
     <div className="citation-heading">Sources from the approved knowledge base</div>
-    {citations.map((citation, index) => <article className="citation-card" key={`${citation.document_id}-${citation.chunk_index}`}>
+    {citations.map((citation, index) => <article className="citation-card" key={`${citation.document_id}-${citation.chunk_index}`} data-testid={`citation-${citation.document_id}-${citation.chunk_index}`}>
       <div className="citation-title"><span className="citation-index">S{index + 1}</span><strong>{citation.title}</strong></div>
       <div className="citation-meta"><FileText size={12} /> {citation.filename} · passage {citation.chunk_index + 1}</div>
       <p>{citation.excerpt}</p>
@@ -46,6 +50,10 @@ export default function KnowledgeBasePage() {
       refetchInterval: (query) => query.state.data?.some((doc) => ['queued', 'processing'].includes(doc.status)) ? 2500 : false,
     },
   });
+  const gaps = useListKnowledgeGaps({ status: 'all' }, {
+    query: { queryKey: getListKnowledgeGapsQueryKey({ status: 'all' }), enabled: isAdmin },
+  });
+  const closeGap = useCloseKnowledgeGap();
   const ask = useSearchKnowledge();
   const requestUpload = useRequestKnowledgeUpload();
   const ingest = useIngestKnowledgeDocument();
@@ -123,6 +131,15 @@ export default function KnowledgeBasePage() {
       onError: (reason) => setUploadError(errorText(reason)),
     });
   };
+  const markGapReviewed = (gapId: string) => {
+    closeGap.mutate({ gapId }, {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: getListKnowledgeGapsQueryKey({ status: 'all' }) });
+        void queryClient.invalidateQueries({ queryKey: getListKnowledgeGapsQueryKey({ status: 'open' }) });
+      },
+      onError: (reason) => setUploadError(errorText(reason)),
+    });
+  };
 
   return <section>
     <div className="page-heading">
@@ -133,7 +150,7 @@ export default function KnowledgeBasePage() {
     <div className="kb-grid">
       <section className="panel kb-search-panel">
         <div className="panel-head"><div><h2 className="panel-title">Ask IT guidance</h2><p className="panel-kicker">Answers use passages from indexed documents only.</p></div><Sparkles size={16} color="hsl(var(--primary))" /></div>
-        <form onSubmit={submitQuestion} className="kb-question-form">
+        <form onSubmit={submitQuestion} className="kb-question-form" data-testid="form-knowledge-search">
           <label htmlFor="knowledge-question">What do you need help with?</label>
           <textarea id="knowledge-question" value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={2000} placeholder="Describe the IT issue or ask a question about a support procedure." data-testid="input-knowledge-question" />
           {searchError ? <div className="auth-error" role="alert">{searchError}</div> : null}
@@ -149,7 +166,7 @@ export default function KnowledgeBasePage() {
 
       {isAdmin ? <section className="panel kb-admin-panel">
         <div className="panel-head"><div><h2 className="panel-title">Manage articles</h2><p className="panel-kicker">Only administrators can add or remove source documents.</p></div><UploadCloud size={16} color="hsl(var(--primary))" /></div>
-        <form className="kb-upload-form" onSubmit={submitDocument}>
+        <form className="kb-upload-form" onSubmit={submitDocument} data-testid="form-knowledge-upload">
           <div className="form-field"><label htmlFor="knowledge-title">Article title</label><input id="knowledge-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={180} placeholder={file?.name || 'Give this article a clear title'} /></div>
           <div className="form-field"><label htmlFor="knowledge-file">Document</label><input id="knowledge-file" type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain,text/markdown" onChange={(event) => { const next = event.target.files?.[0] || null; setFile(next); if (next && !title) setTitle(next.name.replace(/\.[^.]+$/, '')); }} data-testid="input-knowledge-file" /><small>PDF, DOCX, TXT, or Markdown · up to 15 MB</small></div>
           {uploadError ? <div className="auth-error" role="alert">{uploadError}</div> : null}
@@ -165,13 +182,22 @@ export default function KnowledgeBasePage() {
             </div>
             <span className={`kb-status kb-status-${doc.status}`}>{doc.status}</span>
             <div className="kb-document-actions">
-              {doc.status === 'uploading' || doc.status === 'error' ? <button className="icon-button" title="Retry indexing" aria-label={`Retry indexing ${doc.title}`} disabled={ingest.isPending} onClick={() => ingest.mutate({ documentId: doc.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListKnowledgeDocumentsQueryKey() }), onError: (reason) => setUploadError(errorText(reason)) })}><Sparkles size={14} /></button> : null}
-              <button className="icon-button danger" title="Delete document" aria-label={`Delete ${doc.title}`} disabled={remove.isPending} onClick={() => deleteDocument(doc.id, doc.title)}><Trash2 size={14} /></button>
+              {doc.status === 'uploading' || doc.status === 'error' ? <button className="icon-button" title="Retry indexing" aria-label={`Retry indexing ${doc.title}`} data-testid={`button-retry-document-${doc.id}`} disabled={ingest.isPending} onClick={() => ingest.mutate({ documentId: doc.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListKnowledgeDocumentsQueryKey() }), onError: (reason) => setUploadError(errorText(reason)) })}><Sparkles size={14} /></button> : null}
+              <button className="icon-button danger" title="Delete document" aria-label={`Delete ${doc.title}`} data-testid={`button-delete-document-${doc.id}`} disabled={remove.isPending} onClick={() => deleteDocument(doc.id, doc.title)}><Trash2 size={14} /></button>
             </div>
           </article>) : <div className="empty-state"><div className="state-mark"><BookOpen size={18} /></div><strong>No documents yet</strong><div>Upload approved support guides to enable cited answers.</div></div>}
         </div>
       </section> : <section className="panel kb-empty-panel"><div className="empty-state"><div className="state-mark"><BookOpen size={19} /></div><strong>Answers come from approved IT documents</strong><div>The support team manages the documents behind the search results. If no article covers your issue, contact IT support.</div></div></section>}
     </div>
+    {isAdmin ? <section className="panel knowledge-gaps">
+      <div className="panel-head"><div><h2 className="panel-title">Knowledge gaps</h2><p className="panel-kicker">Unanswered needs surfaced through troubleshooting conversations</p></div><AlertTriangle size={16} color="hsl(var(--primary))" /></div>
+      {gaps.isLoading ? <div className="loading-state">Loading knowledge gaps…</div> : gaps.isError ? <div className="empty-state"><div className="state-mark"><AlertTriangle size={18} /></div><strong>Knowledge gaps couldn’t load</strong><div>{errorText(gaps.error)}</div><button className="button secondary small" style={{ marginTop: 12 }} onClick={() => gaps.refetch()} data-testid="button-retry-knowledge-gaps">Try again</button></div> : gaps.data?.length ? <div className="gap-list">
+        {gaps.data.map((gap) => <article className="gap-row" key={gap.id} data-testid={`row-knowledge-gap-${gap.id}`}>
+          <div><div className="gap-query">{gap.query_text}</div><div className="gap-meta"><span>{gap.department}</span><span>·</span><span>{gap.category.replaceAll('_', ' ')}</span><span>·</span><span>{gap.priority} priority</span><span>·</span><time>{new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(gap.created_at))}</time></div><p className="gap-reason">{gap.reason}</p></div>
+          <div className="gap-actions">{gap.ticket_id ? <Link className="gap-link" href={`/tickets/${gap.ticket_id}`} data-testid={`link-gap-ticket-${gap.id}`}>{gap.ticket_number || 'Linked ticket'} <ArrowRight size={12} /></Link> : null}<span className={`gap-status gap-status-${gap.status}`}>{gap.status}</span>{gap.status === 'open' ? <button className="button secondary small" onClick={() => markGapReviewed(gap.id)} disabled={closeGap.isPending} data-testid={`button-close-gap-${gap.id}`}>{closeGap.isPending ? <LoaderCircle size={12} /> : <Check size={12} />} Mark reviewed</button> : null}</div>
+        </article>)}
+      </div> : <div className="empty-state"><div className="state-mark"><Check size={18} /></div><strong>No knowledge gaps recorded</strong><div>When approved guidance is missing, surfaced gaps will appear here.</div></div>}
+    </section> : null}
   </section>;
 }
 

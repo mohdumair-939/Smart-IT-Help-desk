@@ -1,0 +1,744 @@
+You have already been working on this project. **DO NOT start over or delete the existing implementation.**
+
+First, inspect the entire current project and determine exactly what has already been implemented, what works, what is incomplete, and what needs to be redesigned.
+
+The goal now is to take the project to a **presentation-ready, fully functional MVP**.
+
+# PROJECT
+
+Official title:
+
+**Smart Help Desk Ticketing System for IT Services**
+
+But this should NOT look or behave like a generic traditional help-desk system.
+
+The core differentiator is:
+
+> **AI-first problem understanding + RAG-based resolution + intelligent escalation.**
+
+The system should try to solve an employee's IT problem before creating/escalating a conventional support ticket.
+
+---
+
+# 1. AI-FIRST USER EXPERIENCE
+
+Instead of immediately showing:
+
+"Create Ticket → Enter Title → Enter Description"
+
+the system should provide an **AI Support Assistant**.
+
+Example:
+
+Employee:
+
+> "My VPN isn't working."
+
+AI:
+
+> "I can help you troubleshoot this. When did the problem start?"
+
+Employee:
+
+> "Since this morning."
+
+AI:
+
+> "Were you able to connect to the VPN before today?"
+
+Employee:
+
+> "Yes."
+
+AI:
+
+> "Are you connected to the internet normally?"
+
+Employee:
+
+> "Yes."
+
+AI:
+
+> "Did you recently change your password or MFA settings?"
+
+The assistant should dynamically ask relevant questions such as:
+
+* What exactly is the problem?
+* When did it start?
+* Was it working previously?
+* What changed before the issue occurred?
+* Is the issue affecting only you or multiple users?
+* What device are you using?
+* What operating system?
+* What error message do you see?
+* What troubleshooting steps have you already tried?
+
+DO NOT ask every question every time.
+
+Questions should depend on the issue.
+
+---
+
+# 2. AI SHOULD UNDERSTAND THE ISSUE
+
+From the conversation, generate a structured internal problem representation:
+
+* Problem summary
+* Category
+* Department
+* Possible issue type
+* Symptoms
+* Timeline
+* Device/environment
+* Error message
+* Troubleshooting already attempted
+
+Example:
+
+```text
+Problem:
+VPN connection failure
+
+Category:
+Network / Remote Access
+
+Symptoms:
+VPN fails to connect
+
+Started:
+Today
+
+Previous state:
+Worked previously
+
+Internet:
+Working
+
+Possible cause:
+Authentication/MFA/VPN configuration
+
+Recommended department:
+Network / IT Support
+```
+
+This information should automatically become part of the ticket if escalation is required.
+
+---
+
+# 3. RAG SHOULD TRY TO SOLVE THE ISSUE
+
+After understanding the problem:
+
+AI → RAG → Knowledge Base
+
+The system should:
+
+1. Convert the problem into a meaningful retrieval query.
+2. Search the vector database.
+3. Retrieve relevant knowledge-base chunks.
+4. Evaluate whether the retrieved information is sufficiently relevant.
+5. Generate a grounded solution using the retrieved information.
+6. Show the supporting sources.
+
+Example:
+
+```text
+User Problem
+      ↓
+AI Understanding
+      ↓
+Relevant Questions
+      ↓
+Structured Issue
+      ↓
+RAG Retrieval
+      ↓
+Relevant Knowledge
+      ↓
+AI Solution
+```
+
+The AI solution must be based on the actual knowledge base.
+
+DO NOT fabricate solutions or citations.
+
+---
+
+# 4. SOLUTION CONFIDENCE / RESOLUTION DECISION
+
+The system needs a clear decision mechanism.
+
+There should effectively be three outcomes:
+
+### CASE A — SOLVED
+
+RAG finds sufficiently relevant information.
+
+AI provides:
+
+* explanation
+* troubleshooting steps
+* source documents
+* next steps
+
+Then ask:
+
+> "Did this solve your issue?"
+
+If YES:
+
+* mark the interaction as resolved
+* optionally create a resolved ticket/history record
+* store the resolution
+* record the interaction in activity history
+
+---
+
+### CASE B — NEEDS MORE INFORMATION
+
+If the AI is uncertain but can reasonably continue troubleshooting:
+
+Ask additional targeted questions.
+
+Example:
+
+> "I found a possible solution, but I need to know which VPN client you are using."
+
+Continue the conversation.
+
+---
+
+### CASE C — AI CANNOT SOLVE
+
+If:
+
+* no relevant knowledge is retrieved
+* retrieval relevance is too low
+* the issue requires human intervention
+* troubleshooting fails
+* the user says the solution didn't work
+
+then automatically transition to:
+
+**INTELLIGENT ESCALATION**
+
+---
+
+# 5. INTELLIGENT ESCALATION
+
+This is one of the project's major differentiating features.
+
+Do NOT simply assign every failed ticket to "IT Support."
+
+The system should determine the appropriate department based on the issue.
+
+Example:
+
+VPN → Network / IT Support
+
+Database connection → Database
+
+Suspicious login → Security
+
+Cloud service unavailable → Infrastructure / Cloud
+
+Laptop hardware failure → IT Support / Hardware
+
+Email problem → IT Support
+
+Access permission → IT / Security
+
+The AI should produce:
+
+```text
+Detected Department:
+Network
+
+Reason:
+The issue concerns VPN connectivity and remote access.
+
+Priority:
+High
+
+Escalation Reason:
+No sufficiently relevant knowledge-base solution found.
+```
+
+Then automatically assign/route the ticket.
+
+---
+
+# 6. SMART TICKET GENERATION
+
+When escalation happens, the employee should NOT have to manually fill a traditional ticket form.
+
+Automatically generate the ticket from the AI conversation.
+
+Include:
+
+* Ticket ID
+* Problem summary
+* Detailed description
+* Category
+* Priority
+* Department
+* Suggested issue type
+* User information
+* Timeline
+* Symptoms
+* Error messages
+* Troubleshooting attempted
+* AI analysis
+* RAG search results
+* Reason for escalation
+* Conversation summary
+* Attachments
+
+This is much more intelligent than a normal help desk.
+
+---
+
+# 7. AI CONVERSATION → TICKET
+
+Show the employee something like:
+
+### AI Troubleshooting Summary
+
+**Problem:** VPN connection failure
+
+**Started:** Today
+
+**Symptoms:** VPN fails to authenticate
+
+**Troubleshooting attempted:**
+
+* Verified internet connection
+* Restarted VPN client
+* Re-authenticated MFA
+
+**Knowledge Base Result:**
+No sufficiently relevant solution found.
+
+**Escalating to:**
+Network Support
+
+**Priority:**
+High
+
+Then:
+
+**Create Support Ticket**
+
+The employee can confirm before submission.
+
+---
+
+# 8. UNIQUE FEATURE — AI TROUBLESHOOTING JOURNEY
+
+Create a visual interface showing:
+
+```text
+Issue Reported
+      ↓
+Understanding Issue
+      ↓
+Asking Questions
+      ↓
+Searching Knowledge Base
+      ↓
+Solution Found
+      ↓
+User Confirmation
+      ↓
+Resolved
+```
+
+OR:
+
+```text
+Issue Reported
+      ↓
+AI Diagnosis
+      ↓
+RAG Search
+      ↓
+No Reliable Solution
+      ↓
+Department Detection
+      ↓
+Priority Assessment
+      ↓
+Ticket Created
+      ↓
+Engineer Assigned
+```
+
+This should be visually impressive during the presentation.
+
+---
+
+# 9. UNIQUE FEATURE — KNOWLEDGE GAP DETECTION
+
+When RAG cannot solve an issue, don't just escalate it.
+
+Record that the knowledge base was insufficient.
+
+Create an internal concept such as:
+
+**Knowledge Gap Detected**
+
+Example:
+
+> "No sufficiently relevant knowledge article was found for this issue."
+
+Admins should be able to see recurring knowledge gaps.
+
+This allows the organization to identify:
+
+* missing documentation
+* frequently unresolved problems
+* frequently escalated issues
+
+This makes the project more than a ticketing system.
+
+---
+
+# 10. UNIQUE FEATURE — AI LEARNING LOOP
+
+Do NOT claim that the model automatically retrains itself.
+
+Instead implement a practical knowledge improvement workflow.
+
+When an engineer resolves an escalated ticket:
+
+```text
+Ticket Resolved
+      ↓
+Engineer Resolution
+      ↓
+Resolution Reviewed
+      ↓
+Admin can convert resolution into
+Knowledge Base Article
+      ↓
+Future RAG searches can use it
+```
+
+Add an optional:
+
+**"Add Resolution to Knowledge Base"**
+
+button for authorized users.
+
+This creates a useful organizational knowledge loop.
+
+---
+
+# 11. UNIQUE FEATURE — DUPLICATE / RELATED ISSUE DETECTION
+
+Where practical, use semantic similarity to identify potentially related existing tickets.
+
+Example:
+
+> "This issue appears similar to 3 previously reported VPN incidents."
+
+Show:
+
+* related ticket IDs
+* similarity/relevance
+* previous resolution if available
+
+Do NOT automatically merge tickets without confirmation.
+
+---
+
+# 12. UNIQUE FEATURE — PRIORITY INTELLIGENCE
+
+The AI should help determine priority using factors such as:
+
+* number of affected users
+* business impact
+* service criticality
+* urgency
+* symptoms
+
+Example:
+
+```text
+Priority: HIGH
+
+Reason:
+User cannot access a critical business service
+and the issue is blocking work.
+```
+
+Allow support engineers to override AI-generated priority.
+
+---
+
+# 13. SUPPORT ENGINEER EXPERIENCE
+
+The engineer dashboard should not just show a ticket table.
+
+For every AI-escalated ticket show:
+
+### AI Summary
+
+Problem:
+VPN authentication failure
+
+### AI Analysis
+
+Likely area:
+Network / Authentication
+
+### Questions Asked
+
+Show the important answers from the employee.
+
+### Troubleshooting Attempted
+
+Show what has already been tried.
+
+### RAG Results
+
+Show documents retrieved by the AI.
+
+### Escalation Reason
+
+Why AI could not resolve it.
+
+### Recommended Next Action
+
+AI-generated recommendation based only on available evidence.
+
+The engineer should be able to take over immediately without asking the employee the same questions again.
+
+---
+
+# 14. KNOWLEDGE BASE
+
+Make the Knowledge Base a first-class component.
+
+Support:
+
+* PDF
+* TXT
+* Markdown
+* DOCX where practical
+
+Pipeline:
+
+```text
+Document Upload
+↓
+Text Extraction
+↓
+Cleaning
+↓
+Chunking
+↓
+Embeddings
+↓
+ChromaDB
+↓
+Retrieval
+```
+
+Store useful metadata:
+
+* document title
+* source
+* category
+* department
+* page number where available
+* chunk ID
+
+---
+
+# 15. RAG TRANSPARENCY
+
+Every AI-generated solution should show:
+
+**Sources used**
+
+Example:
+
+> VPN Troubleshooting Guide — Page 4
+> MFA Troubleshooting SOP — Page 2
+
+Users must be able to understand where the recommendation came from.
+
+Never generate fake sources.
+
+---
+
+# 16. PRESENTATION-READY UI
+
+The application should look like a modern AI-powered enterprise product.
+
+Avoid making it look like:
+
+* Jira clone
+* ServiceNow clone
+* basic CRUD dashboard
+* generic chatbot
+
+Create a polished interface with:
+
+* modern dashboard
+* AI support assistant
+* conversational troubleshooting interface
+* ticket timeline
+* AI analysis panel
+* RAG source panel
+* escalation visualization
+* knowledge-gap dashboard
+* engineer workspace
+* admin knowledge-base management
+
+Use realistic empty/loading/error states.
+
+---
+
+# 17. DEMO MODE
+
+Create realistic seed/demo data so the application can be demonstrated immediately.
+
+Include several knowledge-base documents and sample scenarios such as:
+
+### Demo 1 — RAG solves issue
+
+"VPN stopped connecting after password reset."
+
+RAG finds relevant VPN/MFA documentation → solution → user confirms → resolved.
+
+### Demo 2 — RAG cannot solve
+
+"Corporate application crashes with an unknown error."
+
+No relevant documentation → AI asks questions → cannot solve → automatically routes to appropriate department.
+
+### Demo 3 — Security issue
+
+"Someone may have accessed my account."
+
+AI identifies Security → high/critical priority → escalates.
+
+### Demo 4 — Related issue
+
+New VPN issue → AI finds similar previous tickets → displays previous resolution.
+
+These flows should work during presentation.
+
+---
+
+# 18. DO NOT FAKE AI
+
+This is extremely important.
+
+Do NOT hard-code:
+
+* AI answers
+* RAG results
+* department routing
+* ticket statistics
+* fake source citations
+
+The demo data can be seeded, but the AI/RAG workflow itself must actually execute.
+
+If an external API is unavailable, clearly handle the error rather than pretending the AI worked.
+
+---
+
+# 19. INSPECT WHAT IS ALREADY BUILT
+
+Before making major changes:
+
+1. Inspect the entire existing repository.
+2. Identify implemented features.
+3. Identify incomplete features.
+4. Identify broken features.
+5. Identify duplicated/poor architecture.
+6. Preserve useful existing work.
+7. Refactor where necessary.
+
+Do NOT rebuild everything unnecessarily.
+
+---
+
+# 20. FINAL PRESENTATION REQUIREMENT
+
+The finished application should demonstrate this complete story:
+
+```text
+Employee has an IT problem
+        ↓
+AI Support Assistant
+        ↓
+AI asks intelligent questions
+        ↓
+Understands the issue
+        ↓
+Searches Knowledge Base using RAG
+        ↓
+┌───────────────────────────────┐
+│                               │
+Solution Found             No Solution
+│                               │
+↓                               ↓
+Explain solution          Analyze issue
+with sources                    ↓
+│                         Determine department
+↓                               ↓
+Ask user if solved         Determine priority
+│                               ↓
+↓                         Create smart ticket
+Resolved                        ↓
+                          Assign engineer
+                                ↓
+                         Engineer continues
+                         with full AI context
+```
+
+This workflow is the **core identity of the product**.
+
+---
+
+# 21. FINAL GOAL
+
+Take the existing project to a **fully functional, polished, presentation-ready application**.
+
+Do not stop at UI.
+
+Everything must be connected:
+
+Frontend
+→ Backend
+→ Database
+→ Authentication
+→ Knowledge Base
+→ Embeddings
+→ ChromaDB
+→ RAG
+→ LLM
+→ AI conversation
+→ Solution evaluation
+→ Intelligent escalation
+→ Ticket assignment
+→ Engineer workflow
+→ Dashboard
+→ Audit history
+
+Finally:
+
+* test the complete application
+* fix errors
+* verify all major demo flows
+* ensure production environment variables are configured
+* deploy the application
+* provide the public URL
+* update README/documentation
+
+**First action: inspect the current project and give me a concise status report of what is already implemented, what is working, what is incomplete, and what you will modify. Do not start deleting or rebuilding existing components.**

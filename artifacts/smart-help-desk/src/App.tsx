@@ -2,7 +2,7 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 're
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import {
-  Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Bell, BookOpen, BriefcaseBusiness, Check,
+  Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Bell, BookOpen, Bot, BriefcaseBusiness, Check,
   CheckCircle2, ChevronDown, CircleHelp, Clock3, FilePlus2, Filter, Gauge, Headphones,
   Layers3, ListFilter, LoaderCircle, LogOut, MessageSquareText, Monitor, Plus, Search,
   Send, ShieldCheck, Ticket as TicketIcon, UserRound, Users, Wifi, X,
@@ -17,6 +17,7 @@ import {
 } from '@workspace/api-client-react';
 import KnowledgeBasePage, { TicketResolutionAssist } from './KnowledgeBasePage';
 import TicketAttachments from './TicketAttachments';
+import AssistantPage from './AssistantPage';
 import {
   TicketCategory, TicketPriority, TicketStatus,
   type ActivityItem, type AuthResponse, type DashboardSummary, type Ticket,
@@ -58,10 +59,12 @@ function App() {
 
 function Router() {
   const [path, navigate] = useLocation();
-  useEffect(() => { if (path === '/') navigate(localStorage.getItem(TOKEN_KEY) ? '/dashboard' : '/login'); }, [path, navigate]);
+  useEffect(() => { if (path === '/') navigate(localStorage.getItem(TOKEN_KEY) ? '/assistant' : '/login'); }, [path, navigate]);
   return <Switch>
     <Route path="/login" component={LoginPage} />
     <Route path="/dashboard"><Protected><DashboardPage /></Protected></Route>
+    <Route path="/assistant"><Protected><AssistantPage /></Protected></Route>
+    <Route path="/assistant/:sessionId"><Protected><AssistantPage /></Protected></Route>
     <Route path="/tickets"><Protected><TicketsPage /></Protected></Route>
     <Route path="/tickets/:ticketId"><Protected><TicketDetailPage /></Protected></Route>
     <Route path="/new-ticket"><Protected><NewTicketPage /></Protected></Route>
@@ -98,8 +101,8 @@ function AppShell({ user, children }: { user: User; children: ReactNode }) {
   };
   const navigation = [
     { href: '/dashboard', label: 'Overview', icon: Gauge },
+    { href: '/assistant', label: 'AI Support', icon: Bot },
     { href: '/tickets', label: 'Ticket queue', icon: Layers3 },
-    { href: '/new-ticket', label: 'Submit a request', icon: FilePlus2 },
     { href: '/knowledge', label: 'Knowledge base', icon: BookOpen },
   ];
   const activePath = window.location.pathname;
@@ -109,7 +112,7 @@ function AppShell({ user, children }: { user: User; children: ReactNode }) {
       <div className="nav-label">Workspace</div>
       <nav aria-label="Main navigation">{navigation.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`nav-link ${activePath === href || (href === '/tickets' && activePath.startsWith('/tickets/')) ? 'active' : ''}`} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={16} strokeWidth={1.8} /><span>{label}</span></Link>)}</nav>
       <div className="sidebar-bottom">
-        <div className="side-help"><CircleHelp size={17} color="#d7b681" /><p>Need a hand? Your IT team is here to help you get back to work.</p><Link href="/new-ticket">Contact support <ArrowUpRight size={12} /></Link></div>
+        <div className="side-help"><CircleHelp size={17} color="#d7b681" /><p>Start with guided troubleshooting or review your support requests.</p><Link href="/assistant">Ask the support assistant <ArrowUpRight size={12} /></Link></div>
         <div className="user-chip"><div className="avatar">{initials(user.name)}</div><div><strong data-testid="text-current-user">{user.name}</strong><span>{nice(user.role)}</span></div><button className="logout" title="Sign out" aria-label="Sign out" onClick={logout} data-testid="button-sign-out"><LogOut size={15} /></button></div>
       </div>
     </aside>
@@ -122,10 +125,11 @@ function AppShell({ user, children }: { user: User; children: ReactNode }) {
 }
 
 function Brand() {
-  return <Link href="/dashboard" className="brand"><span className="brand-mark"><Headphones size={19} strokeWidth={2.2} /></span><span><span className="brand-name">Smart Help Desk</span><span className="brand-sub">Technology support</span></span></Link>;
+  return <Link href="/assistant" className="brand"><span className="brand-mark"><Headphones size={19} strokeWidth={2.2} /></span><span><span className="brand-name">Smart Help Desk</span><span className="brand-sub">Technology support</span></span></Link>;
 }
 function titleForPath(path: string) {
   if (path === '/dashboard') return 'Overview';
+  if (path === '/assistant' || path.startsWith('/assistant/')) return 'AI Support';
   if (path === '/tickets') return 'Ticket queue';
   if (path === '/new-ticket') return 'Submit a request';
   if (path === '/knowledge') return 'Knowledge base';
@@ -356,12 +360,12 @@ function LoginPage() {
   const login = useLogin();
   const register = useRegister();
   const pending = login.isPending || register.isPending;
-  useEffect(() => { if (localStorage.getItem(TOKEN_KEY)) setLocation('/dashboard'); }, [setLocation]);
+  useEffect(() => { if (localStorage.getItem(TOKEN_KEY)) setLocation('/assistant'); }, [setLocation]);
   const finishAuth = (response: AuthResponse) => {
     localStorage.setItem(TOKEN_KEY, response.access_token);
     qc.clear();
     qc.setQueryData(getGetCurrentUserQueryKey(), response.user);
-    setLocation('/dashboard');
+    setLocation('/assistant');
   };
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

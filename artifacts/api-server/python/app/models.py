@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid, func
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -155,3 +155,55 @@ class TicketAttachment(Base):
 
     ticket: Mapped[Ticket] = relationship()
     uploaded_by: Mapped[User] = relationship()
+
+
+class AssistantSession(Base):
+    __tablename__ = "helpdesk_assistant_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    requester_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    ticket_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_tickets.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="triage", index=True)
+    messages: Mapped[list[dict[str, str]]] = mapped_column(JSON, nullable=False, default=list)
+    analysis: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    answer: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    retrieved_sources: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+    related_tickets: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    requester: Mapped[User] = relationship()
+    ticket: Mapped[Ticket | None] = relationship()
+
+
+class KnowledgeGap(Base):
+    __tablename__ = "helpdesk_knowledge_gaps"
+    __table_args__ = (UniqueConstraint("session_id", name="uq_helpdesk_knowledge_gap_session"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_assistant_sessions.id", ondelete="CASCADE"), nullable=False
+    )
+    requester_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    ticket_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("helpdesk_tickets.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    query_text: Mapped[str] = mapped_column(Text, nullable=False)
+    department: Mapped[str] = mapped_column(String(120), nullable=False)
+    category: Mapped[str] = mapped_column(String(32), nullable=False)
+    priority: Mapped[str] = mapped_column(String(16), nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="open", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    session: Mapped[AssistantSession] = relationship()
+    requester: Mapped[User] = relationship()
+    ticket: Mapped[Ticket | None] = relationship()

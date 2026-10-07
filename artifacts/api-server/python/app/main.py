@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import jwt_secret
-from app.routers import attachments, auth, dashboard, knowledge, tickets
+from app.routers import assistant, attachments, auth, dashboard, knowledge, tickets
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("smart_help_desk")
@@ -37,6 +37,7 @@ app.include_router(tickets.router)
 app.include_router(dashboard.router)
 app.include_router(knowledge.router)
 app.include_router(attachments.router)
+app.include_router(assistant.router)
 
 
 @app.get("/api/healthz", tags=["health"])
